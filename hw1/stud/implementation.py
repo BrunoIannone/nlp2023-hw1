@@ -7,7 +7,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# ○ It should initialize your StudentModel class.
+
 def build_model(device: str) -> Model:
+
+    #Chiamo il costruttore di StudentModel
+
     # STUDENT: return StudentModel()
     # STUDENT: your model MUST be loaded on the device "device" indicates
     first_commit = 'hello git'
@@ -42,9 +47,16 @@ class RandomBaseline(Model):
 
 
 class StudentModel(Model):
+    #● In hw1/stud/implementation.py implement the StudentModel class
+#    ○ Load your model and use it in the predict method 
+#    ○ You must respect the signature of the predict method! 
+#    ○ You can add other methods (i.e. the constructor) """
 
     # STUDENT: construct here your model
     # this class should be loading your weights and vocabulary
+
+    #qua devo implementare tutta la ltsm
+    
     def __init__(self, embedding_dim, hidden_dim, vocab_size, tagset_size):
         
         self.hidden_dim = hidden_dim
