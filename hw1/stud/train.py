@@ -21,55 +21,56 @@ class Trainer():
         self.model.to(self.device)  # move model to GPU if available
 
     def prepare_sequence(self,seq, to_ix):
+        #seq = seq[0]
         idxs = [to_ix[w] for w in seq]
         return torch.tensor(idxs, dtype=torch.long)
     
     def train(
     self,
-    model: nn.Module,
-    optimizer: torch.optim.Optimizer,
+    
+    
     loss_function,
     training_data,
     word_to_ix,
     tag_to_ix,
     epochs: int = 5,
+    
     verbose: bool = True
 ):
 
         
-
-        # See what the scores are before training
-        # Note that element i,j of the output is the score for tag j for word i.
-        # Here we don't need to train, so the code is wrapped in torch.no_grad()
-        with torch.no_grad():
-            inputs = self.prepare_sequence(training_data[0][0], word_to_ix)
-            tag_scores = model(inputs)
-            print(tag_scores)
-
-        for epoch in range(300):  # again, normally you would NOT do 300 epochs, it is toy data
-            for sentence, tags in training_data:
+        
+        for epoch in range(epochs):  # again, normally you would NOT do 300 epochs, it is toy data
+            print(epoch)
+            for sentence, tags in zip(training_data["sentences"],training_data["labels"]):
+                #print(word_to_ix)
+                
                 # Step 1. Remember that Pytorch accumulates gradients.
                 # We need to clear them out before each instance
-                model.zero_grad()
+                self.model.zero_grad()
 
                 # Step 2. Get our inputs ready for the network, that is, turn them into
                 # Tensors of word indices.
-                sentence_in = self.prepare_sequence(sentence, word_to_ix)
-                targets = self.prepare_sequence(tags, tag_to_ix)
+                
+                sentence_in = self.prepare_sequence(sentence, word_to_ix).to(self.device)
+
+                targets = self.prepare_sequence(tags, tag_to_ix).to(self.device)
+                #print("SENTENCE" + str(sentence))
+
 
                 # Step 3. Run our forward pass.
-                tag_scores = model(sentence_in)
+                tag_scores = self.model(sentence_in)
 
                 # Step 4. Compute the loss, gradients, and update the parameters by
                 #  calling optimizer.step()
                 loss = loss_function(tag_scores, targets)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
         # See what the scores are after training
         with torch.no_grad():
-            inputs = self.prepare_sequence(training_data[0][0], word_to_ix)
-            tag_scores = model(inputs)
+            inputs = self.prepare_sequence(training_data["sentences"][0], word_to_ix).to(self.device)
+            tag_scores = self.model(inputs)
 
             # The sentence is "the dog ate the apple".  i,j corresponds to score for tag j
             # for word i. The predicted tag is the maximum scoring tag.
@@ -77,4 +78,4 @@ class Trainer():
             # since 0 is index of the maximum value of row 1,
             # 1 is the index of maximum value of row 2, etc.
             # Which is DET NOUN VERB DET NOUN, the correct sequence!
-            print(tag_scores)
+            print(tag_scores) 
