@@ -5,4 +5,4 @@ model/
 *.md
 *.txt
 *.sh
-
+*.pyc

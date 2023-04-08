@@ -4,7 +4,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm.auto import tqdm
 import os 
-
+import utils
+import random
 
 
 class Trainer():
@@ -21,8 +22,13 @@ class Trainer():
         self.model.to(self.device)  # move model to GPU if available
 
     def prepare_sequence(self,seq, to_ix):
-        #seq = seq[0]
-        idxs = [to_ix[w] for w in seq]
+        idxs  = []
+        for w in seq:
+            if w in to_ix:
+                idxs.append(to_ix[w])
+            else:
+                idxs.append(to_ix["UNK"])
+        
         return torch.tensor(idxs, dtype=torch.long)
     
     def train(
@@ -33,16 +39,20 @@ class Trainer():
     training_data,
     word_to_ix,
     tag_to_ix,
+    bio_valid_dataset,
     epochs: int = 5,
     
     verbose: bool = True
 ):
 
         
-        
+        train_log = []
+        valid_log = []
         for epoch in range(epochs):  # again, normally you would NOT do 300 epochs, it is toy data
             print(epoch)
-            for sentence, tags in zip(training_data["sentences"],training_data["labels"]):
+            random.shuffle(training_data)
+            for sentence, tags in training_data:
+                #print(sentence)
                 #print(word_to_ix)
                 
                 # Step 1. Remember that Pytorch accumulates gradients.
@@ -53,7 +63,7 @@ class Trainer():
                 # Tensors of word indices.
                 
                 sentence_in = self.prepare_sequence(sentence, word_to_ix).to(self.device)
-
+                
                 targets = self.prepare_sequence(tags, tag_to_ix).to(self.device)
                 #print("SENTENCE" + str(sentence))
 
@@ -66,8 +76,19 @@ class Trainer():
                 loss = loss_function(tag_scores, targets)
                 loss.backward()
                 self.optimizer.step()
-
-        # See what the scores are after training
+                
+            print(loss)
+            train_log.append(float(loss))
+            loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch)
+            print(loss)
+            valid_log.append(float(loss))
+        return {
+            "train_history" : train_log,
+            "valid_history": valid_log
+        }
+        torch.save(self.model.state_dict(),
+                       os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch)))
+        """ # See what the scores are after training
         with torch.no_grad():
             inputs = self.prepare_sequence(training_data["sentences"][0], word_to_ix).to(self.device)
             tag_scores = self.model(inputs)
@@ -78,4 +99,35 @@ class Trainer():
             # since 0 is index of the maximum value of row 1,
             # 1 is the index of maximum value of row 2, etc.
             # Which is DET NOUN VERB DET NOUN, the correct sequence!
-            print(tag_scores) 
+            print(tag_scores)  """
+        
+        #print(self.validation(self.model,valid_data,tag_to_ix,word_to_ix))
+    
+    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch):
+        #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
+
+        tot = len(valid_data)
+        
+        right = 0
+        for sentence, tag in valid_data:
+            #print(sentence)
+            inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
+            prediction = self.model(inputs)
+            tag_ix = utils.label_to_ix(tag_to_ix,tag)
+            prediction_list = []
+            for row in prediction:
+                
+                prediction_list.append(list(row).index(max(row)))
+            if prediction_list == tag_ix:
+                right+=1
+                #print("Right" + str(right))
+                #print("PREDICTION LIST" + str(prediction_list))
+                #print("TAG IX" + str(tag_ix))
+
+        #print(tot)
+        return (right/tot)*100
+
+
+
+            
+

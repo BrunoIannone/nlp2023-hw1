@@ -1,8 +1,9 @@
 import os
 import json
+import matplotlib.pyplot as plt
 EMBEDDING_DIM = 6
-HIDDEN_DIM = 6
-EPOCHS_NUM = 100
+HIDDEN_DIM = 32
+EPOCHS_NUM = 13
 DIRECTORY_NAME = os.path.dirname(__file__)
 
 
@@ -47,3 +48,25 @@ def build_training_data(file_path):
         'labels': labels
 
     }
+    
+
+def label_to_ix(tag_to_ix,labels):
+    res = []
+    for label in labels:
+        res.append(tag_to_ix[label])
+    return res
+
+def plot_logs(logs, title):
+
+    plt.figure(figsize=(8,6))
+
+    plt.plot(list(range(len(logs['train_history']))), logs['train_history'], label='Train loss')
+    plt.plot(list(range(len(logs['valid_history']))), logs['valid_history'], label='Test loss')
+    
+    plt.title(title)
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc="upper right")
+
+    plt.show()
+

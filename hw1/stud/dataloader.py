@@ -1,46 +1,28 @@
 import json
+import torch
+from torch.utils.data import Dataset
+import utils
 
 
-def build_vocabulary(sentences):  # {word:idx}
-    dict = {}
-    idx = 0
-    for sentence in sentences:
-        for token in sentence:
-            if token not in dict:
-                dict[token] = idx
-                idx += 1
+class BioDataset(Dataset):
+    # TODO: vedere se transform e target_transform sono utili
+    def __init__(self, data, labels, transform=None, target_transform=None):
+        self.data = data
+        self.labels = labels
+        self.transform = transform
+        self.target_transform = target_transform
+        self.samples = self._preprocess_samples(data, labels)
 
-    return dict
+    def _preprocess_samples(self, data, labels): #notebook 3
+        res = []
+        for sentence, label in zip(data, labels):
+            res.append((sentence, label))
+        # print(res)
+        return(res)
 
+    def __len__(self):
+        return len(self.samples)
 
-def build_labels(sentences_labels):  # {label:idx}
-    dict = {}
-    idx = 0
-    for labels in sentences_labels:
-        for label in labels:
-            if label not in dict:
-                dict[label] = idx
-                idx += 1
-
-    return dict
-
-
-def build_training_data(file_path):
-    f = open(file_path, 'r')
-    line = f.readline()
-    sentences = []
-    labels = []
-    while (line):
-
-        json_line = json.loads(line)
-        sentences.append(json_line['tokens'])
-        labels.append(json_line['labels'])
-        line = f.readline()
-
-    f.close()
-
-    return {
-        'sentences': sentences,
-        'labels': labels
-
-    }
+    def __getitem__(self, index):
+        self.samples[index]
+        return
