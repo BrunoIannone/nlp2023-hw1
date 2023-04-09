@@ -45,13 +45,14 @@ class Trainer():
     verbose: bool = True
 ):
 
-        
+        chance = 3
+        last_loss = -999
         train_log = []
         valid_log = []
-        for epoch in range(epochs):  # again, normally you would NOT do 300 epochs, it is toy data
+        for epoch in tqdm(range(epochs),total = epochs,leave = True, desc = "Eposchs"):  # again, normally you would NOT do 300 epochs, it is toy data
             print(epoch)
             random.shuffle(training_data)
-            for sentence, tags in training_data:
+            for sentence, tags in tqdm(training_data,total = len(training_data),leave = True, desc = "Training"):
                 #print(sentence)
                 #print(word_to_ix)
                 
@@ -74,14 +75,24 @@ class Trainer():
                 # Step 4. Compute the loss, gradients, and update the parameters by
                 #  calling optimizer.step()
                 loss = loss_function(tag_scores, targets)
+                
                 loss.backward()
                 self.optimizer.step()
                 
-            print(loss)
+                
+            print("Train Loss: "+ str(loss))
             train_log.append(float(loss))
-            loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch)
-            print(loss)
+            loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch,loss_function)
+            print("Valid avg loss: " + str(loss))
+            if loss > last_loss:
+                  chance -=1
+                  print("LOSS NOT LOWERING => chance = " + str(chance))
+                  if chance<=0:
+                    break
+                  last_loss = loss
             valid_log.append(float(loss))
+        torch.save('.','state_{}.pt'.format(epoch))
+        
         return {
             "train_history" : train_log,
             "valid_history": valid_log
@@ -103,17 +114,23 @@ class Trainer():
         
         #print(self.validation(self.model,valid_data,tag_to_ix,word_to_ix))
     
-    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch):
+    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function):
         #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
 
         tot = len(valid_data)
-        
+        loss_avg = 0
         right = 0
-        for sentence, tag in valid_data:
+        for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = True, desc = "Validation"):
             #print(sentence)
             inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
+            targets = self.prepare_sequence(tag, tag_to_ix).to(self.device)
+
             prediction = self.model(inputs)
             tag_ix = utils.label_to_ix(tag_to_ix,tag)
+            #  calling optimizer.step()
+            loss = loss_function(prediction, targets)
+            loss_avg += loss
+            #print(loss_avg)
             prediction_list = []
             for row in prediction:
                 
@@ -124,8 +141,9 @@ class Trainer():
                 #print("PREDICTION LIST" + str(prediction_list))
                 #print("TAG IX" + str(tag_ix))
 
-        #print(tot)
-        return (right/tot)*100
+        print("Precision" + str((right/tot)*100))
+        return loss_avg/tot
+
 
 
 

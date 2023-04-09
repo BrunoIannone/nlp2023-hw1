@@ -15,10 +15,10 @@ class BioClassifier(nn.Module):
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim,bidirectional = True)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim,bidirectional = True, batch_first = True)
 
         # The linear layer that maps from hidden state space to tag space
-        self.hidden2tag = nn.Linear(hidden_dim, tagset_size)
+        self.hidden2tag = nn.Linear(2*hidden_dim, tagset_size)
 
     def forward(self, sentence):
         embeds = self.word_embeddings(sentence)
