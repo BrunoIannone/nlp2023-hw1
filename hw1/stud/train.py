@@ -49,10 +49,10 @@ class Trainer():
         last_loss = -999
         train_log = []
         valid_log = []
-        for epoch in tqdm(range(epochs),total = epochs,leave = True, desc = "Eposchs"):  # again, normally you would NOT do 300 epochs, it is toy data
-            print(epoch)
+        for epoch in tqdm(range(epochs),total = epochs,leave = False, desc = "Epochs"):  # again, normally you would NOT do 300 epochs, it is toy data
+            #print(epoch)
             random.shuffle(training_data)
-            for sentence, tags in tqdm(training_data,total = len(training_data),leave = True, desc = "Training"):
+            for sentence, tags in tqdm(training_data,total = len(training_data), leave = False, desc = "Training"):
                 #print(sentence)
                 #print(word_to_ix)
                 
@@ -80,16 +80,16 @@ class Trainer():
                 self.optimizer.step()
                 
                 
-            print("Train Loss: "+ str(loss))
+            print(" Train Loss: "+ str(float(loss)))
             train_log.append(float(loss))
             loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch,loss_function)
-            print("Valid avg loss: " + str(loss))
-            if loss > last_loss:
+            print(" Valid avg loss: " + str(float(loss)))
+            if loss > last_loss and last_loss!= -999:
                   chance -=1
-                  print("LOSS NOT LOWERING => chance = " + str(chance))
+                  print(" LOSS NOT LOWERING => chance = " + str(chance))
                   if chance<=0:
                     break
-                  last_loss = loss
+            last_loss = loss
             valid_log.append(float(loss))
         torch.save('.','state_{}.pt'.format(epoch))
         
@@ -120,7 +120,7 @@ class Trainer():
         tot = len(valid_data)
         loss_avg = 0
         right = 0
-        for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = True, desc = "Validation"):
+        for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = False, desc = "Validation"):
             #print(sentence)
             inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
             targets = self.prepare_sequence(tag, tag_to_ix).to(self.device)
@@ -141,7 +141,7 @@ class Trainer():
                 #print("PREDICTION LIST" + str(prediction_list))
                 #print("TAG IX" + str(tag_ix))
 
-        print("Precision" + str((right/tot)*100))
+        print(" Precision: " + str((right/tot)*100))
         return loss_avg/tot
 
 

@@ -1,9 +1,10 @@
 import os
 import json
 import matplotlib.pyplot as plt
-EMBEDDING_DIM = 6
-HIDDEN_DIM = 32
-EPOCHS_NUM = 13
+EMBEDDING_DIM = 22
+HIDDEN_DIM = 128
+EPOCHS_NUM = 30
+LAYERS_NUM = 2
 DIRECTORY_NAME = os.path.dirname(__file__)
 
 

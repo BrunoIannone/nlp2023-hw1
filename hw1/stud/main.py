@@ -25,7 +25,6 @@ bio_dataset = dataloader.BioDataset(
     training_data["sentences"], training_data['labels'])
 
 train_dataloader = DataLoader(bio_dataset,batch_size = 1)
-print(random.shuffle(bio_dataset.samples))
 valid_data = utils.build_training_data(
     os.path.join(utils.DIRECTORY_NAME, '../../data/dev.jsonl'))
 bio_valid_dataset = dataloader.BioDataset(
@@ -38,10 +37,10 @@ valid_dataloader = DataLoader(bio_valid_dataset,batch_size = 1)
 # print(tag_to_ix)
 
 #round(1.6*pow(len(word_to_ix),1/4)
-model = bio.BioClassifier(22, utils.HIDDEN_DIM,
-                          len(word_to_ix), len(tag_to_ix))
+model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
+                          len(word_to_ix), len(tag_to_ix),utils.LAYERS_NUM,device)
 loss_function = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(),lr=0.1,weight_decay=1e-5)
+optimizer = optim.SGD(model.parameters(),lr=0.1)
 
 trainer = tr.Trainer(model, optimizer, device)
 logs = trainer.train(loss_function, bio_dataset.samples, word_to_ix, tag_to_ix,bio_valid_dataset.samples, utils.EPOCHS_NUM)
