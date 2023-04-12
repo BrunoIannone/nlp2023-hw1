@@ -21,11 +21,14 @@ class BioClassifier(nn.Module):
         self.hidden2tag = nn.Linear(2*hidden_dim, tagset_size)
 
     def forward(self, sentence):
-        h0 = torch.zeros(self.layers_num*2,len(sentence),self.hidden_dim).to(self.device)
-        c0 = torch.zeros(self.layers_num*2,len(sentence),self.hidden_dim).to(self.device)
+        
         
         embeds = self.word_embeddings(sentence)
-        lstm_out, _ = self.lstm(embeds.view(len(sentence), 1, -1),(h0,c0))
+        lstm_out, _ = self.lstm(embeds.view(len(sentence), 1, -1))
+        """ print(lstm_out)
+        print("\n")
+        print("\n")
+        print("\n") """
         tag_space = self.hidden2tag(lstm_out.view(len(sentence), -1))
         tag_scores = F.log_softmax(tag_space, dim=1)
         return tag_scores

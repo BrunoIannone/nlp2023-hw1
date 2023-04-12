@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 import os 
 import utils
 import random
+import time
 
 
 class Trainer():
@@ -114,7 +115,7 @@ class Trainer():
         
         #print(self.validation(self.model,valid_data,tag_to_ix,word_to_ix))
     
-    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function):
+    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function,):
         #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
 
         tot = len(valid_data)
@@ -137,9 +138,14 @@ class Trainer():
                 prediction_list.append(list(row).index(max(row)))
             if prediction_list == tag_ix:
                 right+=1
-                #print("Right" + str(right))
-                #print("PREDICTION LIST" + str(prediction_list))
-                #print("TAG IX" + str(tag_ix))
+                
+                print("Right" + str(right))
+                print("PREDICTION LIST" + str(prediction_list))
+                print("TAG IX" + str(tag_ix))
+            else:
+                print("PREDICTION LIST" + str(prediction_list))
+                print("TAG IX" + str(tag_ix))
+            
 
         print(" Precision: " + str((right/tot)*100))
         return loss_avg/tot
