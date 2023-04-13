@@ -1,11 +1,13 @@
 import os
 import json
 import matplotlib.pyplot as plt
-EMBEDDING_DIM = 22
-HIDDEN_DIM = 128
-EPOCHS_NUM = 30
-LAYERS_NUM = 2
+EMBEDDING_DIM = 64
+HIDDEN_DIM = 256
+EPOCHS_NUM = 3
+LAYERS_NUM = 1
 DIRECTORY_NAME = os.path.dirname(__file__)
+LEARNING_RATE = 0.001
+CHANCES = 5
 
 
 def build_vocabulary(sentences):  # {word:idx}

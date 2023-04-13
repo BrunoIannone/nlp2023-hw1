@@ -45,14 +45,15 @@ class Trainer():
     
     verbose: bool = True
 ):
-
-        chance = 3
-        last_loss = -999
+        chance = utils.CHANCES
+        last_loss = None
         train_log = []
         valid_log = []
-        for epoch in tqdm(range(epochs),total = epochs,leave = False, desc = "Epochs"):  # again, normally you would NOT do 300 epochs, it is toy data
+        for epoch in tqdm(range(epochs),total = epochs,leave = False, desc = "Epochs"):  
             #print(epoch)
             random.shuffle(training_data)
+            losses = []
+
             for sentence, tags in tqdm(training_data,total = len(training_data), leave = False, desc = "Training"):
                 #print(sentence)
                 #print(word_to_ix)
@@ -75,80 +76,70 @@ class Trainer():
 
                 # Step 4. Compute the loss, gradients, and update the parameters by
                 #  calling optimizer.step()
-                loss = loss_function(tag_scores, targets)
-                
+                loss= loss_function(tag_scores, targets)
+                losses.append(loss)
+
                 loss.backward()
                 self.optimizer.step()
+                #self.validation(sentence,tag_to_ix,word_to_ix,0,loss_function)
                 
-                
-            print(" Train Loss: "+ str(float(loss)))
-            train_log.append(float(loss))
-            loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch,loss_function)
-            print(" Valid avg loss: " + str(float(loss)))
-            if loss > last_loss and last_loss!= -999:
+            train_log.append((sum(losses)/len(losses)).item())
+            print(" Train Loss: "+ str(sum(losses)/len(losses)))
+            valid_loss = self.validation(bio_valid_dataset,tag_to_ix,word_to_ix,epoch,loss_function)
+            print(" Valid loss: " + str(float(valid_loss)))
+            if last_loss!= None and valid_loss > last_loss  :
                   chance -=1
                   print(" LOSS NOT LOWERING => chance = " + str(chance))
                   if chance<=0:
                     break
-            last_loss = loss
-            valid_log.append(float(loss))
-        torch.save('.','state_{}.pt'.format(epoch))
+            last_loss = valid_loss
+            valid_log.append(valid_loss.item())
+        torch.save(self.model.state_dict(),os.path.join(utils.DIRECTORY_NAME,'state_{}.pt'.format(epoch)))
         
         return {
             "train_history" : train_log,
             "valid_history": valid_log
         }
-        torch.save(self.model.state_dict(),
-                       os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch)))
-        """ # See what the scores are after training
-        with torch.no_grad():
-            inputs = self.prepare_sequence(training_data["sentences"][0], word_to_ix).to(self.device)
-            tag_scores = self.model(inputs)
-
-            # The sentence is "the dog ate the apple".  i,j corresponds to score for tag j
-            # for word i. The predicted tag is the maximum scoring tag.
-            # Here, we can see the predicted sequence below is 0 1 2 0 1
-            # since 0 is index of the maximum value of row 1,
-            # 1 is the index of maximum value of row 2, etc.
-            # Which is DET NOUN VERB DET NOUN, the correct sequence!
-            print(tag_scores)  """
-        
-        #print(self.validation(self.model,valid_data,tag_to_ix,word_to_ix))
-    
+      
     def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function,):
-        #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
-
+        self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
+        self.model.eval()
         tot = len(valid_data)
         loss_avg = 0
         right = 0
-        for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = False, desc = "Validation"):
-            #print(sentence)
-            inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
-            targets = self.prepare_sequence(tag, tag_to_ix).to(self.device)
+        losses = []
+        with torch.no_grad():
+            for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = False, desc = "Validation"):
+                #print(sentence)
+                inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
+                targets = self.prepare_sequence(tag, tag_to_ix).to(self.device)
 
-            prediction = self.model(inputs)
-            tag_ix = utils.label_to_ix(tag_to_ix,tag)
-            #  calling optimizer.step()
-            loss = loss_function(prediction, targets)
-            loss_avg += loss
-            #print(loss_avg)
-            prediction_list = []
-            for row in prediction:
-                
-                prediction_list.append(list(row).index(max(row)))
-            if prediction_list == tag_ix:
-                right+=1
-                
-                print("Right" + str(right))
-                print("PREDICTION LIST" + str(prediction_list))
-                print("TAG IX" + str(tag_ix))
-            else:
-                print("PREDICTION LIST" + str(prediction_list))
-                print("TAG IX" + str(tag_ix))
+                prediction = self.model(inputs)
+                #print(prediction)
+                #tag_ix = utils.label_to_ix(tag_to_ix,tag)
+                #  calling optimizer.step()
+                loss = loss_function(prediction, targets)
+                losses.append(loss)
+                #print(loss_avg)
+                prediction_list = []
+
+                for row in prediction:
+                    
+                    prediction_list.append(list(row).index(max(row)))
+                #print(prediction_list)
+                if prediction_list == list(targets):
+                    right+=1
+                    
+                    """ print("Right" + str(right))
+                    print("PREDICTION LIST" + str(prediction_list))
+                    print("TAG IX" + str(tag_ix))
+                else:
+                    print("PREDICTION LIST" + str(prediction_list))
+                    print("TAG IX" + str(tag_ix)) """
             
-
         print(" Precision: " + str((right/tot)*100))
-        return loss_avg/tot
+        self.model.train()
+        return sum(losses)/len(losses)
 
 
 
