@@ -1,13 +1,15 @@
 import os
 import json
 import matplotlib.pyplot as plt
-EMBEDDING_DIM = 64
-HIDDEN_DIM = 256
-EPOCHS_NUM = 3
+import torch
+EMBEDDING_DIM = 32
+HIDDEN_DIM = 128
+EPOCHS_NUM = 2
 LAYERS_NUM = 1
 DIRECTORY_NAME = os.path.dirname(__file__)
 LEARNING_RATE = 0.001
 CHANCES = 5
+BATCH_SIZE = 32
 
 
 def build_vocabulary(sentences):  # {word:idx}

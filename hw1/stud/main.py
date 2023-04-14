@@ -7,7 +7,7 @@ import torch.optim as optim
 import utils
 from torch.utils.data import DataLoader
 import random
-import dataloader
+import biodataset
 import bioclassifier as bio
 import os
 import utils
@@ -21,16 +21,19 @@ tag_to_ix = utils.build_labels(training_data["labels"])
 # print(tag_to_ix)
 
 word_to_ix = utils.build_vocabulary(training_data["sentences"])
-bio_dataset = dataloader.BioDataset(
-    training_data["sentences"], training_data['labels'])
+word_to_ix["<PAD>"] = len(word_to_ix)
+bio_dataset = biodataset.BioDataset(
+    training_data["sentences"], training_data['labels'],word_to_ix)
 
-train_dataloader = DataLoader(bio_dataset, batch_size=1)
+train_dataloader = DataLoader(bio_dataset, batch_size=utils.BATCH_SIZE)
 valid_data = utils.build_training_data(
     os.path.join(utils.DIRECTORY_NAME, '../../data/dev.jsonl'))
-bio_valid_dataset = dataloader.BioDataset(
-    valid_data["sentences"], valid_data['labels'])
+bio_valid_dataset = biodataset.BioDataset(
+    valid_data["sentences"], valid_data['labels'],word_to_ix)
+#print(bio_valid_dataset.samples)
 
-valid_dataloader = DataLoader(bio_valid_dataset, batch_size=1)
+valid_dataloader = DataLoader(bio_valid_dataset, batch_size=utils.BATCH_SIZE)
+print(valid_dataloader)
 
 # print(round(1.6*pow(len(word_to_ix),1/4)))
 # print(dict)
@@ -44,6 +47,6 @@ optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 trainer = tr.Trainer(model, optimizer, device)
 #logs = trainer.train(loss_function, bio_dataset.samples, word_to_ix,
-#                    tag_to_ix, bio_valid_dataset.samples, utils.EPOCHS_NUM)
-print(trainer.validation(bio_valid_dataset.samples,tag_to_ix,word_to_ix,utils.EPOCHS_NUM-1,loss_function))
+#                 tag_to_ix, bio_valid_dataset.samples, utils.EPOCHS_NUM)
+print(trainer.validation(valid_dataloader,tag_to_ix,word_to_ix,utils.EPOCHS_NUM-1,loss_function))
 #utils.plot_logs(logs, 'Train vs Test loss')

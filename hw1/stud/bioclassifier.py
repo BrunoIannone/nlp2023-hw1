@@ -25,10 +25,13 @@ class BioClassifier(nn.Module):
         
 
         embeds = self.word_embeddings(sentence)
+        embeds = nn.utils.rnn.pack_padded_sequence(embeds,len(sentence))
         #h0 = torch.rand(self.layers_num*2, embeds.size(0), self.hidden_dim).to(self.device)
         #c0 = torch.rand(self.layers_num*2, embeds.size(0), self.hidden_dim).to(self.device)
 
         lstm_out, _ = self.lstm(embeds.view(len(sentence), 1, -1))
+        lstm_out, _ = torch.nn.utils.rnn.pad_packed_sequence(lstm_out, batch_first=True)
+
         tag_space = self.hidden2tag(lstm_out[:, -1,:])
         tag_scores = F.log_softmax(tag_space, dim=1)
         return tag_scores

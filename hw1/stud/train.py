@@ -105,15 +105,18 @@ class Trainer():
         self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
         self.model.eval()
         tot = len(valid_data)
+        print(tot)
         loss_avg = 0
         right = 0
         losses = []
         with torch.no_grad():
+            
             for sentence, tag in tqdm(valid_data,total = len(valid_data),leave = False, desc = "Validation"):
+                
                 #print(sentence)
                 inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
                 targets = self.prepare_sequence(tag, tag_to_ix).to(self.device)
-
+                
                 prediction = self.model(inputs)
                 #print(prediction)
                 #tag_ix = utils.label_to_ix(tag_to_ix,tag)
@@ -121,21 +124,29 @@ class Trainer():
                 loss = loss_function(prediction, targets)
                 losses.append(loss)
                 #print(loss_avg)
-                prediction_list = []
+                #prediction_list = []
 
-                for row in prediction:
+                #for row in prediction:
                     
-                    prediction_list.append(list(row).index(max(row)))
+                #    prediction_list.append(list(row).index(max(row)))
                 #print(prediction_list)
-                if prediction_list == list(targets):
-                    right+=1
+                #if prediction_list == list(targets):
+                   # right+=1
                     
-                    """ print("Right" + str(right))
-                    print("PREDICTION LIST" + str(prediction_list))
-                    print("TAG IX" + str(tag_ix))
-                else:
-                    print("PREDICTION LIST" + str(prediction_list))
-                    print("TAG IX" + str(tag_ix)) """
+                #    #print("Right" + str(right))
+                    #print("PREDICTION LIST" + str(prediction_list))
+                    #print("TAG IX" + str(tag_ix))
+                #else:
+                   # print("PREDICTION LIST" + str(prediction_list))
+                    #print("TAG IX" + str(tag_ix)) 
+                #print(prediction)
+                _,predictions = prediction.max(1)
+                #print("PREDICTION " + str(predictions))
+                #print("TARGETS " + str(targets))
+                #print()
+                right += (predictions == targets).sum()
+                #print("RIGHT", str(right))
+                tot += predictions.size(0) 
             
         print(" Precision: " + str((right/tot)*100))
         self.model.train()
