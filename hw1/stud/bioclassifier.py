@@ -23,11 +23,12 @@ class BioClassifier(nn.Module):
 
     def forward(self, sentence):
         
+        #embeds = torch.nn.utils.rnn.pad_sequence(sentence,batch_first=True)
 
         embeds = self.word_embeddings(sentence)
-        embeds = nn.utils.rnn.pack_padded_sequence(embeds,len(sentence))
         #h0 = torch.rand(self.layers_num*2, embeds.size(0), self.hidden_dim).to(self.device)
         #c0 = torch.rand(self.layers_num*2, embeds.size(0), self.hidden_dim).to(self.device)
+        #embeds = nn.utils.rnn.pack_padded_sequence(embeds,len(sentence))
 
         lstm_out, _ = self.lstm(embeds.view(len(sentence), 1, -1))
         lstm_out, _ = torch.nn.utils.rnn.pad_packed_sequence(lstm_out, batch_first=True)

@@ -7,7 +7,7 @@ import os
 import utils
 import random
 import time
-
+from torch.nn.utils.rnn import pack_padded_sequence,pad_packed_sequence
 
 class Trainer():
     
@@ -51,12 +51,15 @@ class Trainer():
         valid_log = []
         for epoch in tqdm(range(epochs),total = epochs,leave = False, desc = "Epochs"):  
             #print(epoch)
-            random.shuffle(training_data)
             losses = []
-
-            for sentence, tags in tqdm(training_data,total = len(training_data), leave = False, desc = "Training"):
+            print(training_data)
+            for sentence,tags in tqdm(training_data,total = len(training_data), leave = False, desc = "Training"):
+                print(sentence)
                 #print(sentence)
                 #print(word_to_ix)
+                sentence = pack_padded_sequence(sentence)
+                
+                #tags = pack_padded_sequence(tags)
                 
                 # Step 1. Remember that Pytorch accumulates gradients.
                 # We need to clear them out before each instance
@@ -65,18 +68,18 @@ class Trainer():
                 # Step 2. Get our inputs ready for the network, that is, turn them into
                 # Tensors of word indices.
                 
-                sentence_in = self.prepare_sequence(sentence, word_to_ix).to(self.device)
+                #sentence_in = self.prepare_sequence(sentence, word_to_ix).to(self.device)
                 
-                targets = self.prepare_sequence(tags, tag_to_ix).to(self.device)
+                #targets = self.prepare_sequence(tags, tag_to_ix).to(self.device)
                 #print("SENTENCE" + str(sentence))
 
 
                 # Step 3. Run our forward pass.
-                tag_scores = self.model(sentence_in)
-
+                tag_scores = self.model(sentence)
+                #tag_scores = pad_packed_sequence(tags)
                 # Step 4. Compute the loss, gradients, and update the parameters by
                 #  calling optimizer.step()
-                loss= loss_function(tag_scores, targets)
+                loss= loss_function(tag_scores, tags)
                 losses.append(loss)
 
                 loss.backward()
@@ -102,7 +105,7 @@ class Trainer():
         }
       
     def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function,):
-        self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
+        #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
         self.model.eval()
         tot = len(valid_data)
         print(tot)

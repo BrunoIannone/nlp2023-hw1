@@ -2,6 +2,7 @@ import os
 import json
 import matplotlib.pyplot as plt
 import torch
+from torch.nn.utils.rnn import pad_sequence
 EMBEDDING_DIM = 32
 HIDDEN_DIM = 128
 EPOCHS_NUM = 2
@@ -10,7 +11,7 @@ DIRECTORY_NAME = os.path.dirname(__file__)
 LEARNING_RATE = 0.001
 CHANCES = 5
 BATCH_SIZE = 32
-
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def build_vocabulary(sentences):  # {word:idx}
     dict = {}
@@ -61,6 +62,15 @@ def label_to_ix(tag_to_ix,labels):
         res.append(tag_to_ix[label])
     return res
 
+def sentence_to_ix(word_to_ix,sentence):
+    res = []
+    for word in sentence:
+        if word not in word_to_ix:
+            res.append(word_to_ix["UNK"])
+        else:
+            res.append(word_to_ix[word])
+    return res
+
 def plot_logs(logs, title):
 
     plt.figure(figsize=(8,6))
@@ -75,3 +85,14 @@ def plot_logs(logs, title):
 
     plt.show()
 
+def collate_fn(sentence):
+    token,label = [],[]
+    for elem in sentence:
+        #print(elem[0])
+        #print("\n")
+        token.append(torch.tensor(elem[0]))
+        label.append(torch.tensor(elem[1]))
+    #print(label)
+
+    return pad_sequence(token,batch_first=True).to(DEVICE), pad_sequence(label,batch_first=True).to(DEVICE)
+    
