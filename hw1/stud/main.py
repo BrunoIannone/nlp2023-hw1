@@ -21,7 +21,10 @@ tag_to_ix = utils.build_labels(training_data["labels"])
 # print(tag_to_ix)
 
 word_to_ix = utils.build_vocabulary(training_data["sentences"])
-word_to_ix["<PAD>"] = len(word_to_ix)
+
+for key in word_to_ix:
+    print(key)
+    break
 bio_dataset = biodataset.BioDataset(
     training_data["sentences"], training_data['labels'],word_to_ix,tag_to_ix)
 
@@ -33,20 +36,20 @@ bio_valid_dataset = biodataset.BioDataset(
 #print(bio_valid_dataset.samples)
 
 valid_dataloader = DataLoader(bio_valid_dataset, batch_size=utils.BATCH_SIZE,collate_fn=utils.collate_fn)
-print(valid_dataloader)
+#print(valid_dataloader)
 
 # print(round(1.6*pow(len(word_to_ix),1/4)))
 # print(dict)
 # print(tag_to_ix)
-
+print(tag_to_ix)
 # round(1.6*pow(len(word_to_ix),1/4)
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
                           len(word_to_ix), len(tag_to_ix), utils.LAYERS_NUM, device)
-loss_function = nn.CrossEntropyLoss()
+loss_function = nn.CrossEntropyLoss(ignore_index=11)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 trainer = tr.Trainer(model, optimizer, device)
 logs = trainer.train(loss_function, train_dataloader, word_to_ix,
-                 tag_to_ix, bio_valid_dataset, utils.EPOCHS_NUM)
+                 tag_to_ix, valid_dataloader, utils.EPOCHS_NUM)
 print(trainer.validation(valid_dataloader,tag_to_ix,word_to_ix,utils.EPOCHS_NUM-1,loss_function))
-#utils.plot_logs(logs, 'Train vs Test loss')
+utils.plot_logs(logs, 'Train vs Test loss')

@@ -2,7 +2,8 @@ import json
 import torch
 from torch.utils.data import Dataset
 import utils
-
+import numpy as np
+from torch.nn.utils.rnn import pad_sequence
 
 class BioDataset(Dataset):
     # TODO: vedere se transform e target_transform sono utili
@@ -28,8 +29,7 @@ class BioDataset(Dataset):
     def __getitem__(self, index):
         sentence = self.samples[index][0]
         labels = self.samples[index][1]
-        res = utils.sentence_to_ix(self.word_to_ix,sentence),utils.label_to_ix(self.tag_to_ix,labels)
-        #print(res)
+        res = utils.sentence_to_ix(self.word_to_ix,sentence), utils.label_to_ix(self.tag_to_ix,labels)
          
         
         
