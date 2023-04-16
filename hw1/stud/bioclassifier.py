@@ -16,10 +16,10 @@ class BioClassifier(nn.Module):
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, layers_num,
-                            bidirectional=False, batch_first=True, dropout=0)
+                            bidirectional=True, batch_first=True, dropout=0.2)
 
         # The linear layer that maps from hidden state space to tag space
-        print(tagset_size)
+        #print(tagset_size)
         self.hidden2tag = nn.Linear(utils.LAYERS_NUM*hidden_dim, tagset_size)
 
     def forward(self, sentence):
@@ -33,19 +33,19 @@ class BioClassifier(nn.Module):
         #embeds = nn.utils.rnn.pack_padded_sequence(embeds,len(sentence))
         embeds = torch.nn.utils.rnn.pack_padded_sequence(embeds,sentence[1], batch_first=True,enforce_sorted=False)
         lstm_out, _ = self.lstm(embeds)
+        
         output_padded, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(lstm_out, batch_first=True)
         #print("output_padded: " + str(output_padded.size()) + "\n")
-
+#
         #tag_space = self.hidden2tag(output_padded[:, -1,:])
         tag_space = self.hidden2tag(output_padded)
-
 
         
         
         #print("tag_space" + str(tag_space.size()) + "\n")
-        tag_scores = F.log_softmax(tag_space,dim=1) ##compute log_softmax along rows
+        #tag_scores = F.log_softmax(tag_space,dim=1) ##compute log_softmax along rows
         #print("TAG SCORE:"+ str(tag_scores) + "\n")
         #print("OIA")
-        return tag_scores
+        return tag_space
     def embed(self,sentence):
         return self.word_embeddings(sentence)

@@ -49,10 +49,11 @@ class Trainer():
         last_loss = None
         train_log = []
         valid_log = []
+        self.model.train()
         for epoch in tqdm(range(epochs),total = epochs,leave = False, desc = "Epochs"):  
             #print(epoch)
             losses = []
-            for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(training_data),total = len(training_data), leave = False, desc = "Training"):
+            for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(training_data),total = len(training_data), leave = True):
                 #print(sentence)
 
                 #embeds = self.model.embed(sentence)
@@ -75,10 +76,13 @@ class Trainer():
 
 
                 # Step 3. Run our forward pass.
-                tag_scores = self.model((sentence,sentence_len))
+                tag_scores= self.model((sentence,sentence_len))
+                #print("SCORES SIZE:" +str(torch.transpose(tag_scores,1,2).size()) + "\n")
+
                 #print("TAGS SIZE:" +str(tags.size()) + "\n")
                 # Step 4. Compute the loss, gradients, and update the parameters by
                 #  calling optimizer.step()
+
                 loss= loss_function(torch.transpose(tag_scores,1,2), tags)
                 losses.append(loss)
 
@@ -104,7 +108,7 @@ class Trainer():
             "valid_history": valid_log
         }
       
-    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function,):
+    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function):
         #self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
         self.model.eval()
         tot = len(valid_data)
@@ -114,7 +118,7 @@ class Trainer():
         losses = []
         with torch.no_grad():
             
-            for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(valid_data),total = len(valid_data), leave = False, desc = "Validation"):
+            for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(valid_data),total = len(valid_data), leave = True, desc = "Validation"):
                 
                 #print(sentence)
                 #inputs = self.prepare_sequence(sentence, word_to_ix).to(self.device)
@@ -162,15 +166,45 @@ class Trainer():
         self.model.train()
         return sum(losses)/len(losses)
 
-    def test (self, valid_data):
+    def test (self, test_data,epoch):
+        right = 0
+        model = self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
+        tot  = 0
         self.model.eval()
-        self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
+        #embeddings = self.model.word_embeddings.weight
         with torch.no_grad():
-            for sentence,label in valid_data:
-                prediction = self.model(sentence)
-                _,predictions = prediction.max(1)
-                right += (torch.transpose(predictions,1,2) == tags).sum()
-                tot += predictions.size(0) 
+            for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(test_data),total = len(test_data), leave = True, desc = "Testing",position=100):
+                prediction = self.model((sentence,sentence_len))
+                print(prediction.size())
+                
+                _,predictions = torch.transpose(prediction,1,2).max(1)
+                tot += sentence.size(0)
+
+                unpadded_tags = []
+                #print(predictions)
+                #time.sleep(5)
+                #predictions = prediction.tolist()
+                for i in range(len(tags_len)):
+                    row =tags[i].tolist()
+                    #print(len(row[:tags_len[i]]))
+                    #print(tags_len[i])
+                    #print("\n")
+                    #unpadded_tags.append(row[:tags_len[i]])
+                    
+                    #print(predictions[i][:sentence_len[i]].tolist())
+                    #print(row[:tags_len[i]])
+                    #print("\n")
+                    
+                    
+                
+                    if(predictions[i][:sentence_len[i]].tolist() == row[:tags_len[i]]):
+                        right +=1 
+                        #print(right)
+                    #time.sleep(5)
+                #if predictions.tolist() == unpadded_tags:
+                #    right+=1
+                #right += (predictions.tolist() == unpadded_tags).sum()
+                
         print(" Precision: " + str((right/tot)*100))
 
 

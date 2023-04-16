@@ -5,12 +5,12 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 EMBEDDING_DIM = 32
 HIDDEN_DIM = 128
-EPOCHS_NUM = 20
-LAYERS_NUM = 1
+EPOCHS_NUM = 400
+LAYERS_NUM = 2
 DIRECTORY_NAME = os.path.dirname(__file__)
 LEARNING_RATE = 0.001
 CHANCES = 5
-BATCH_SIZE = 8192
+BATCH_SIZE = 4096 #2^12
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def build_vocabulary(sentences):  # {word:idx}
