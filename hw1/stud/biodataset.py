@@ -6,6 +6,7 @@ import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 
 class BioDataset(Dataset):
+    # TODO: FARE LA DOCUMENTAZIONE
     # TODO: vedere se transform e target_transform sono utili
     def __init__(self, data, labels, word_to_ix,tag_to_ix,transform=None, target_transform=None):
         self.data = data

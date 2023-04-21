@@ -6,7 +6,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import utils
 from torch.utils.data import DataLoader
-import random
 import biodataset
 import bioclassifier as bio
 import os
@@ -15,16 +14,16 @@ import utils
 
 device = utils.DEVICE
 
-training_data = utils.build_training_data(
+training_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/train.jsonl'))
-valid_data = utils.build_training_data(
+valid_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/dev.jsonl'))
-test_data = utils.build_training_data(
+test_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/test.jsonl'))
 
-tag_to_ix = utils.build_labels(training_data["labels"])
+tag_to_ix = utils.build_labels_vocabulary(training_data["labels"],True)
 
-word_to_ix = utils.build_vocabulary(training_data["sentences"])
+word_to_ix = utils.build_tokens_vocabulary(training_data["sentences"],True)
 
 
 train_dataset = biodataset.BioDataset(
