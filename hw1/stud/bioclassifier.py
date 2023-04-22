@@ -29,7 +29,7 @@ class BioClassifier(nn.Module):
             vocab_size, embedding_dim, padding_idx=0)
 
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, layers_num,
-                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0)
+                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0.2)
         if(utils.BIDIRECTIONAL):
 
             self.hidden2tag = nn.Linear(2*hidden_dim, tagset_size)
