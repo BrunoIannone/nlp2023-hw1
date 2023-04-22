@@ -3,6 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from typing import List
 
 ###HYPERPARAMETERS###
 EMBEDDING_DIM = 32
@@ -94,12 +95,12 @@ def build_data_from_jsonl(file_path:str):
     }
     
 
-def label_to_ix(tag_to_ix:dict,labels:list(str)):
+def label_to_ix(tag_to_ix:dict,labels: List[str]):
     """Converts labels string in integer indexes. 
        
 
     Args:
-        tag_to_ix (dictionary): dictionary with structure {token:index} 
+        tag_to_ix (dictionary): dictionary with structure {label:index} 
         labels (list(string)): List of labels (stings)
 
     Returns:
@@ -110,7 +111,7 @@ def label_to_ix(tag_to_ix:dict,labels:list(str)):
         res.append(tag_to_ix[label])
     return res
 
-def sentence_to_ix(word_to_ix:dict,sentence:list(str)):
+def sentence_to_ix(word_to_ix:dict,sentence:List[str]):
     """Converts tokens of strings in their indexes. If a token is unknown, it's index is the <UNK> key value
 
     Args:
@@ -127,7 +128,16 @@ def sentence_to_ix(word_to_ix:dict,sentence:list(str)):
         else:
             res.append(word_to_ix[word])
     return res
-def ix_to_label(tag_to_ix, src_label):
+def ix_to_label(tag_to_ix:dict, src_label:List[int]):
+    """Converts list of labels indexes to their string value. It's the inverse operation of label_to_idx function
+
+    Args:
+        tag_to_ix (dict): dictionary with structure {label:index}
+        src_label (list): list of label indexes
+
+    Returns:
+        list(str): List of labels (strings)
+    """
     out_label = []
     temp = []
     for label_list in src_label:
@@ -169,16 +179,29 @@ def plot_logs(logs, title):
     plt.show()
 
 def collate_fn(sentence):
-    (xx, yy) = zip(*sentence)
-    xx = [torch.tensor(x) for x in xx ]
-    yy = [torch.tensor(y) for y in yy ]
+    """Collate function for the dataloader for batch padding
 
-    x_lens = [len(x) for x in xx]
-    y_lens = [len(y) for y in yy]
-    xx_pad = pad_sequence(xx, batch_first=True, padding_value=0)
-    yy_pad = pad_sequence(yy, batch_first=True, padding_value=0)
+    Args:
+        sentence (list(list(str),list(str))): List of list of couples [[sentence],[labels]]
+
+    Returns:
+        Tensor: padded sentence
+        Tensor: padded labels
+        list(int): lenghts of  non padded sentence
+        list(int): lenghts of  non padded labels
+        
+    """
+
+    (sentences, labels) = zip(*sentence)
+    tensor_sentences = [torch.tensor(sentence_) for sentence_ in sentences ]     
+    tensor_labels = [torch.tensor(label) for label in labels ]
+
+    sentences_lens = [len(sentence_) for sentence_ in tensor_sentences]
+    labels_lens = [len(label) for label in tensor_labels]
+    tensor_sentences_padded = pad_sequence(tensor_sentences, batch_first=True, padding_value=0)
+    tensor_labels_padded = pad_sequence(tensor_labels, batch_first=True, padding_value=0)
     
-    return xx_pad.to(DEVICE), yy_pad.to(DEVICE), x_lens, y_lens
+    return tensor_sentences_padded.to(DEVICE), tensor_labels_padded.to(DEVICE), sentences_lens, labels_lens
     
 
     

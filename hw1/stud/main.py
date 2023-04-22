@@ -49,6 +49,8 @@ model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
                           len(word_to_ix), len(tag_to_ix), utils.LAYERS_NUM, device)
 loss_function = nn.CrossEntropyLoss(ignore_index=11)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
+print(type(device))
+
 
 trainer = tr.Trainer(model, optimizer, device)
 logs = trainer.train(loss_function, train_dataloader, word_to_ix,

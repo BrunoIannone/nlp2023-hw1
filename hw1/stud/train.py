@@ -8,11 +8,21 @@ import utils
 import random
 import time
 from torch.nn.utils.rnn import pack_padded_sequence,pad_packed_sequence
+from torch.utils.data import Dataset
 from seqeval.metrics import f1_score
 
 class Trainer():
-    
-    def __init__(self, model, optimizer, device):
+    """Class for model training
+    """
+    def __init__(self, model:nn.Module, optimizer, device:str):
+        """_summary_
+
+        Args:
+            model (nn.Module): Chosen model to train
+            optimizer: Chosen optimizer to use for optimization
+            device (str): Chosen device for training
+        """
+
 
         self.device = device
 
@@ -23,29 +33,33 @@ class Trainer():
         self.model.train()  # we are using this model for training (some layers have different behaviours in train and eval mode)
         self.model.to(self.device)  # move model to GPU if available
 
-    def prepare_sequence(self,seq, to_ix):
-        idxs  = []
-        for w in seq:
-            if w in to_ix:
-                idxs.append(to_ix[w])
-            else:
-                idxs.append(to_ix["UNK"])
-        
-        return torch.tensor(idxs, dtype=torch.long)
     
     def train(
+    
     self,
     
     
     loss_function,
-    training_data,
-    word_to_ix,
-    tag_to_ix,
-    bio_valid_dataset,
-    epochs: int = 5,
-    
-    verbose: bool = True
-):
+    training_data:Dataset,
+    word_to_ix:dict,
+    tag_to_ix:dict,
+    bio_valid_dataset: Dataset,
+    epochs: int,
+    ):
+        """Training function
+
+        Args:
+            loss_function: Chosen loss function
+            training_data (Dataset): Training data from Data Loader
+            word_to_ix (dict): (Vocabulary) dictionary with structure {token:index}
+            tag_to_ix (dict):  dictionary with structure {label:index}
+            bio_valid_dataset (Dataset): BIO dataset class
+            epochs (int): Number of epochs
+            
+
+        Returns:
+            dict: dictionary wit train/valid losses {"train_history" : train_loss_log, "valid_history": valid_loss_log}
+        """
         chance = utils.CHANCES
         last_loss = None
         train_log = []
@@ -86,7 +100,18 @@ class Trainer():
             "valid_history": valid_log
         }
       
-    def validation(self,valid_data,tag_to_ix,word_to_ix,epoch,loss_function):
+    def validation(self,valid_data:Dataset,tag_to_ix:dict,word_to_ix,epoch,loss_function):
+        
+        """Function for model evaluation
+
+        Args:
+            valid_data (Dataset): BIO dataset class
+            tag_to_ix (dict):  dictionary with structure {label:index}
+            loss_function: Chosen loss function
+
+        Returns:
+            float: average valid loss
+        """
         self.model.eval()
         total_pred=[]
         total_tags = []
@@ -115,12 +140,24 @@ class Trainer():
 
         return sum(losses)/len(losses)
 
-    def test (self, test_data,epoch,tag_to_ix):
+    def test (self, test_data:Dataset,epoch:int,tag_to_ix:dict):
+        """Function for model testing
+
+        Args:
+            test_data (Dataset): Test data
+            epoch (int): epoch number
+            tag_to_ix (dict):  dictionary with structure {label:index}
+
+        Returns:
+            float: F1 score
+        """
+        
+        
         right = 0
         model = self.model.load_state_dict(torch.load(os.path.join(utils.DIRECTORY_NAME, 'state_{}.pt'.format(epoch))))
         tot  = 0
         self.model.eval()
-
+        # TODO: CALCOLARE F1 GLOBALE IN MODO CORRETTO
         with torch.no_grad():
             
             for _,(sentence,tags,sentence_len,tags_len) in tqdm(enumerate(test_data),total = len(test_data), leave = True, desc = "Testing",position=100):
@@ -134,15 +171,7 @@ class Trainer():
 
                 return f1_score(tags, predictions,mode = 'strict')
 
-                """ tot += sentence.size(0)
-
-                unpadded_tags = []
-                
-                for i in range(len(tags_len)):
-                    row =tags[i].tolist()
-                    if(predictions[i][:sentence_len[i]].tolist() == row[:tags_len[i]]):
-                        right +=1                 
-        print(" Precision: " + str((right/tot)*100)) """
+               
                 
 
 
