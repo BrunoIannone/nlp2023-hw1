@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from typing import List
+from collections import Counter
+
 
 ###HYPERPARAMETERS###
 EMBEDDING_DIM = 64
@@ -19,57 +21,8 @@ BATCH_SIZE = 4096 #2^12
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def build_tokens_vocabulary(sentences:List[List[str]]):  
-    """Create a vocabulary from tokens in sentences with padding having index -1
-
-    Args:
-        sentences (List[List[str]]): list of list of strings
-
-    Returns:
-        dictionary: Returns a dictionary with the structure {token:index} 
-    """
-    special_characters = "!@#$%^&*()-+?_=,<>/"
-    dict = {}
-    idx = 0
-    
-    dict["<pad>"] = idx
-    idx+=1
-    dict["<unk>"] = idx
-    idx +=1
-    dict["<num>"]=idx
-    idx+=1
-    for sentences_list in sentences:
-        for token in sentences_list:
-            if token.isnumeric():
-                continue
-
-            elif token.lower() not in dict and not any(character in special_characters for character in token.lower()):
-                dict[token.lower()] = idx
-                idx += 1
-
-    return dict
 
 
-def build_labels_vocabulary(sentences_labels: List[List[str]]):
-    """Converts labels in integral indexes with padding having the greater index
-
-    Args:
-        sentences_labels (List[List[str]]): List of list of strings (labels)
-        
-
-    Returns:
-        dictionary: Returns a dictionary with the structure {label:index}
-    """
-    dict = {}
-    idx = 0
-    for labels_list in sentences_labels:
-        for label in labels_list:
-            if label not in dict:
-                dict[label] = idx
-                idx += 1
-    
-    dict["<pad>"] = idx
-    return dict
 
 def build_data_from_jsonl(file_path:str): 
     """Split the JSONL file in file_path in sentences and relative labels 

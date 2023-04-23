@@ -10,6 +10,7 @@ import bioclassifier as bio
 import os
 import utils
 import torch
+import vocabulary
 
 
 device = utils.DEVICE
@@ -21,20 +22,22 @@ valid_data = utils.build_data_from_jsonl(
 test_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/test.jsonl'))
 
-tag_to_ix = utils.build_labels_vocabulary(training_data["labels"])
+#tag_to_ix = utils.build_labels_vocabulary(training_data["labels"])
 
-word_to_ix = utils.build_tokens_vocabulary(training_data["sentences"])
+#word_to_ix = utils.build_tokens_vocabulary(training_data["sentences"])
 
-print(len(word_to_ix))
+vocab = vocabulary.Vocabulary(training_data["sentences"], training_data["labels"])
+
+
 
 train_dataset = biodataset.BioDataset(
-    training_data["sentences"], training_data['labels'], word_to_ix, tag_to_ix)
+    training_data["sentences"], training_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
 
 valid_dataset = biodataset.BioDataset(
-    valid_data["sentences"], valid_data['labels'], word_to_ix, tag_to_ix)
+    valid_data["sentences"], valid_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
 
 test_dataset = biodataset.BioDataset(
-    test_data["sentences"], test_data['labels'], word_to_ix, tag_to_ix)
+    test_data["sentences"], test_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
 
 
 train_dataloader = DataLoader(
@@ -51,8 +54,8 @@ loss_function = nn.CrossEntropyLoss(ignore_index=len(tag_to_ix)-1)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 
-trainer = tr.Trainer(model, optimizer, device, loss_function, word_to_ix,
-                     tag_to_ix)
+trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.word_to_ix,vocab.ix_to_word,
+                     vocab.tag_to_ix,vocab.ix_to_tag)
 logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
 utils.plot_logs(logs, 'Train vs Test loss')
 results = trainer.test(test_dataloader, utils.EPOCHS_NUM-1)
