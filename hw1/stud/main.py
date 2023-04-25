@@ -22,22 +22,20 @@ valid_data = utils.build_data_from_jsonl(
 test_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/test.jsonl'))
 
-#tag_to_ix = utils.build_labels_vocabulary(training_data["labels"])
 
-#word_to_ix = utils.build_tokens_vocabulary(training_data["sentences"])
 
 vocab = vocabulary.Vocabulary(training_data["sentences"], training_data["labels"])
 
 
 
 train_dataset = biodataset.BioDataset(
-    training_data["sentences"], training_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
+    training_data["sentences"], training_data['labels'], vocab.word_to_idx, vocab.labels_to_idx)
 
 valid_dataset = biodataset.BioDataset(
-    valid_data["sentences"], valid_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
+    valid_data["sentences"], valid_data['labels'], vocab.word_to_idx, vocab.labels_to_idx)
 
 test_dataset = biodataset.BioDataset(
-    test_data["sentences"], test_data['labels'], vocab.token_vocabulary, vocab.tag_vocabulary)
+    test_data["sentences"], test_data['labels'], vocab.word_to_idx, vocab.labels_to_idx)
 
 
 train_dataloader = DataLoader(
@@ -49,13 +47,12 @@ test_dataloader = DataLoader(
 
 
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
-                          len(word_to_ix), len(tag_to_ix), utils.LAYERS_NUM, device)
-loss_function = nn.CrossEntropyLoss(ignore_index=len(tag_to_ix)-1)
+                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)
+loss_function = nn.CrossEntropyLoss(ignore_index=len(vocab.labels_to_idx)-1)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 
-trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.word_to_ix,vocab.ix_to_word,
-                     vocab.tag_to_ix,vocab.ix_to_tag)
+trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.idx_to_labels)
 logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
 utils.plot_logs(logs, 'Train vs Test loss')
 results = trainer.test(test_dataloader, utils.EPOCHS_NUM-1)

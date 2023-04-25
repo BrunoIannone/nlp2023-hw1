@@ -5,14 +5,14 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from typing import List
 from collections import Counter
-
+import time
 
 ###HYPERPARAMETERS###
-EMBEDDING_DIM = 64
+EMBEDDING_DIM = 32
 LAYERS_NUM = 2
 HIDDEN_DIM = 128 
 EPOCHS_NUM = 100
-BIDIRECTIONAL = True
+BIDIRECTIONAL =True
 DIRECTORY_NAME = os.path.dirname(__file__)
 LEARNING_RATE = 0.01
 CHANCES = 5
@@ -56,12 +56,12 @@ def build_data_from_jsonl(file_path:str):
     }
     
 
-def label_to_idx(tag_to_ix:dict,labels: List[str]):
+def label_to_idx(tag_to_idx:dict, labels: List[str]):
     """Converts labels string in integer indexes. 
        
 
     Args:
-        tag_to_ix (dictionary): dictionary with structure {label:index} 
+        tag_to_idx (dictionary): dictionary with structure {label:index} 
         labels (List[string]): List of labels (stings)
 
     Returns:
@@ -69,14 +69,14 @@ def label_to_idx(tag_to_ix:dict,labels: List[str]):
     """
     res = []
     for label in labels:
-        res.append(tag_to_ix[label])
+        res.append(tag_to_idx[label])
     return res
 
-def sentence_to_idx(word_to_ix:dict,sentence:List[str]):
+def sentence_to_idx(word_to_idx:dict,sentence:List[str]):
     """Converts tokens of strings in their indexes. If a token is unknown, it's index is the <unk> key value
 
     Args:
-        word_to_ix (dict): dictionary with structure {word:index}
+        word_to_idx (dict): dictionary with structure {word:index}
         sentence (list): list of tokens (strings)
 
     Returns:
@@ -85,18 +85,18 @@ def sentence_to_idx(word_to_ix:dict,sentence:List[str]):
     res = []
     for word in sentence:
         if word.isnumeric():
-            res.append(word_to_ix["<num>"])
+            res.append(word_to_idx["<num>"])
 
-        elif word.lower() not in word_to_ix:
-            res.append(word_to_ix["<unk>"])
+        elif word.lower() not in word_to_idx:
+            res.append(word_to_idx["<unk>"])
         else:
-            res.append(word_to_ix[word.lower()])
+            res.append(word_to_idx[word.lower()])
     return res
-def ix_to_label(tag_to_ix:dict, src_label:List[int]):
+def idx_to_label(idx_to_tag:dict, src_label:List[int]):
     """Converts list of labels indexes to their string value. It's the inverse operation of label_to_idx function
 
     Args:
-        tag_to_ix (dict): dictionary with structure {label:index}
+        tag_to_idx (dict): dictionary with structure {label:index}
         src_label (list): list of label indexes
 
     Returns:
@@ -108,15 +108,10 @@ def ix_to_label(tag_to_ix:dict, src_label:List[int]):
         
         temp = []
         for label in label_list:
-           
-            for key in tag_to_ix:
-                
-               
-                if tag_to_ix[key] == label:
-                    if(key == "<pad>"):
-                        temp.append("O")
-                    else:
-                        temp.append(key)
+            if "<pad>" == idx_to_tag[label]:
+                temp.append("O") 
+            else:
+                temp.append(idx_to_tag[label])
                     
         
 

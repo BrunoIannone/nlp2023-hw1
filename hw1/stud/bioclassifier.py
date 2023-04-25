@@ -10,14 +10,14 @@ class BioClassifier(nn.Module):
     """BIO classifier class
     """
 
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, tagset_size: int, layers_num: int, device: str):
+    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, labelset_size: int, layers_num: int, device: str):
         """Init class for the BIO classifier
 
         Args:
             embedding_dim (int): Embedding dimension
             hidden_dim (int): Hidden dimension
             vocab_size (int): Vocabulary size
-            tagset_size (int): Number of classes
+            labelset_size (int): Number of classes
             layers_num (int): Number of layers of the LSTM
             device (str): Device for calculation
         """
@@ -29,12 +29,15 @@ class BioClassifier(nn.Module):
             vocab_size, embedding_dim, padding_idx=0)
 
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, layers_num,
-                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0.2)
+                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0.8)
+        
+        self.dropout = nn.Dropout(0.8)
+
         if(utils.BIDIRECTIONAL):
 
-            self.hidden2tag = nn.Linear(2*hidden_dim, tagset_size)
+            self.hidden2labels = nn.Linear(2*hidden_dim, labelset_size)
         else:
-            self.hidden2tag = nn.Linear(hidden_dim, tagset_size)
+            self.hidden2labels = nn.Linear(hidden_dim, labelset_size)
 
     def forward(self, sentence: tuple):
         """Model forward pass
@@ -47,6 +50,7 @@ class BioClassifier(nn.Module):
         """
 
         embeds = self.embed(sentence[0])
+        embeds = self.dropout(embeds)
 
         embeds = torch.nn.utils.rnn.pack_padded_sequence(
             embeds, sentence[1], batch_first=True, enforce_sorted=False)
@@ -54,9 +58,13 @@ class BioClassifier(nn.Module):
 
         output_padded, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(
             lstm_out, batch_first=True)
-        tag_space = self.hidden2tag(output_padded)
+        
+        output_padded = self.dropout(output_padded)
 
-        return tag_space
+
+        labels_space = self.hidden2labels(output_padded)
+
+        return labels_space
 
     def embed(self, sentence:torch.Tensor):
         """Aux function for embedding
