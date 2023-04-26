@@ -46,12 +46,12 @@ test_dataloader = DataLoader(
 
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
                           len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)
-loss_function = nn.CrossEntropyLoss(ignore_index=vocab.labels_to_idx["<pad>"],reduction=None)
+loss_function = nn.CrossEntropyLoss(ignore_index=vocab.labels_to_idx["<pad>"])
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 
 trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.idx_to_labels)
-logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM,utils.EARLY_STOP)
+logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
 utils.plot_logs(logs, 'Train vs Test loss')
 results = trainer.test(test_dataloader)
 print(results)

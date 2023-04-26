@@ -87,8 +87,8 @@ class Vocabulary():
                     idx_to_labels[idx] = label
                     idx += 1
         
-        labels_to_idx["<pad>"] = idx
-        idx_to_labels[idx] = "<pad>"
+        labels_to_idx['<pad>'] = idx
+        idx_to_labels[idx] = '<pad>'
 
         return {
             "labels_to_idx": labels_to_idx,

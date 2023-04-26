@@ -11,14 +11,14 @@ import time
 EMBEDDING_DIM = 32
 LAYERS_NUM = 2
 HIDDEN_DIM = 128 
-EPOCHS_NUM = 100
+EPOCHS_NUM = 10
 BIDIRECTIONAL =True
 DIRECTORY_NAME = os.path.dirname(__file__)
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 CHANCES = 5
-DROPOUT_LAYER = 0.8
-DROPOUT_LSTM = 0.2
-BATCH_SIZE = 2#4096 #2^12
+DROPOUT_LAYER = 0
+DROPOUT_LSTM = 0
+BATCH_SIZE = 4096 #2^12
 #####################
 EARLY_STOP = 0
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -58,12 +58,12 @@ def build_data_from_jsonl(file_path:str):
     }
     
 
-def label_to_idx(tag_to_idx:dict, labels: List[str]):
+def label_to_idx(labels_to_idx:dict, labels: List[str]):
     """Converts labels string in integer indexes. 
        
 
     Args:
-        tag_to_idx (dictionary): dictionary with structure {label:index} 
+        labels_to_idx (dictionary): dictionary with structure {label:index} 
         labels (List[string]): List of labels (stings)
 
     Returns:
@@ -71,7 +71,7 @@ def label_to_idx(tag_to_idx:dict, labels: List[str]):
     """
     res = []
     for label in labels:
-        res.append(tag_to_idx[label])
+        res.append(labels_to_idx[label])
     return res
 
 def sentence_to_idx(word_to_idx:dict,sentence:List[str]):
@@ -93,11 +93,11 @@ def sentence_to_idx(word_to_idx:dict,sentence:List[str]):
         else:
             res.append(word_to_idx[word.lower()])
     return res
-def idx_to_label(idx_to_tag:dict, src_label:List[int]):
+def idx_to_label(idx_to_labels:dict, src_label:List[int]):
     """Converts list of labels indexes to their string value. It's the inverse operation of label_to_idx function
 
     Args:
-        tag_to_idx (dict): dictionary with structure {label:index}
+        labels_to_idx (dict): dictionary with structure {label:index}
         src_label (list): list of label indexes
 
     Returns:
@@ -109,10 +109,12 @@ def idx_to_label(idx_to_tag:dict, src_label:List[int]):
         
         temp = []
         for label in label_list:
-            if "<pad>" == idx_to_tag[label]:
+            
+            #print(label)
+            if '<pad>' == idx_to_labels[label]:
                 temp.append("O") 
             else:
-                temp.append(idx_to_tag[label])
+                temp.append(idx_to_labels[label])
                     
         
 
@@ -127,8 +129,9 @@ def plot_logs(logs, title): #notebook 3
     plt.figure(figsize=(8,6))
 
     plt.plot(list(range(len(logs['train_history']))), logs['train_history'], label='Train loss')
-    plt.plot(list(range(len(logs['valid_history']))), logs['valid_history'], label='Test loss')
-    
+    plt.plot(list(range(len(logs['valid_history']))), logs['valid_history'], label='Valid loss')
+    plt.plot(list(range(len(logs['f1_history']))), logs['f1_history'], label='F1',color = 'red')
+
     plt.title(title)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')

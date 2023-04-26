@@ -49,7 +49,7 @@ class BioClassifier(nn.Module):
             Tensor: Model predictions
         """
         embeds = self.word_embeddings(sentence[0])
-        embeds = self.dropout(embeds)
+        embeds = self.dropout_layer(embeds)
 
         embeds = torch.nn.utils.rnn.pack_padded_sequence(
             embeds, sentence[1], batch_first=True, enforce_sorted=False)

@@ -48,6 +48,7 @@ class Trainer():
             last_f1 = None
         train_log = []
         valid_log = []
+        f1_log= []
         max_f1 = 0
         for epoch in tqdm(range(epochs),desc="Epochs"):
             self.model.train()
@@ -64,7 +65,7 @@ class Trainer():
                 labels = labels.view(-1)
 
                 loss = self.loss_function(predictions, labels)
-
+                
 
                 losses.append(loss)
 
@@ -83,6 +84,7 @@ class Trainer():
             if utils.EARLY_STOP:
                 last_f1 = f1
             valid_log.append(valid_loss.item())
+            f1_log.append(f1.item())
             if(max_f1<f1):
                 max_f1 = f1
                 max_epoch = epoch
@@ -95,7 +97,8 @@ class Trainer():
 
         return {
             "train_history": train_log,
-            "valid_history": valid_log
+            "valid_history": valid_log,
+            "f1_history": f1_log
         }
 
     def validation(self, valid_data: Dataset):
@@ -118,18 +121,20 @@ class Trainer():
 
                 predictions = self.model((sentence, sentence_len))
                 
-                predictions = predictions.view(-1, predictions.shape[-1])
+                predictions_view = predictions.view(-1, predictions.shape[-1])
 
-                labels = labels.view(-1)
+                labels_view = labels.view(-1)
 
-                loss = self.loss_function(predictions, labels)
+                loss = self.loss_function(predictions_view, labels_view)
                 losses.append(loss)
-                _, predicted_labels = predictions.max(1)
+
+                predicted_labels = torch.argmax(predictions,-1)
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
                 total_pred.extend(predicted_labels)
                 labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
                 total_labels.extend(labels)
+
         f1 = f1_score(total_labels, total_pred, mode='strict')
         print("F1: " + str(f1) +  "\n")
         print("\n")
@@ -158,18 +163,14 @@ class Trainer():
         with torch.no_grad():
 
             for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(test_data), desc="Testing"):
-                predictions = self.model((sentence, sentence_len))
+               predictions = self.model((sentence, sentence_len))
                 
-                predictions = predictions.view(-1, predictions.shape[-1])
+               predicted_labels = torch.argmax(predictions,-1)
 
-                labels = labels.view(-1)
-
-                _, predicted_labels = predictions.max(1)
-
-                predicted_labels = utils.idx_to_label(
-                    self.idx_to_labels, predicted_labels.tolist())
-                total_pred.extend(predicted_labels)
-                labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
-                total_labels.extend(labels)
+               predicted_labels = utils.idx_to_label(
+                   self.idx_to_labels, predicted_labels.tolist())
+               total_pred.extend(predicted_labels)
+               labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
+               total_labels.extend(labels)
 
         return f1_score(total_labels, total_pred, mode='strict')
