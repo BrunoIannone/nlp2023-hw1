@@ -1,30 +1,37 @@
 from typing import List
-import utils
 class Vocabulary():
+    """Vocabulary class
+    """
     def __init__(self,sentences: List[List[str]], labels: List[List[str]]):
+        """Init function for the vocabulary class
 
-        self.token_vocabulary = self.build_tokens_vocabulary(sentences)
+        Args:
+            sentences (List[List[str]]): List of list of sentence tokens
+            labels (List[List[str]]): List of list of sentences token labels
+        """
+
+        token_vocabulary = self.build_tokens_vocabulary(sentences)
         
-        self.word_to_idx = self.token_vocabulary["word_to_idx"]
-        self.idx_to_word = self.token_vocabulary["idx_to_word"]
+        self.word_to_idx = token_vocabulary["word_to_idx"]
+        self.idx_to_word = token_vocabulary["idx_to_word"]
 
-        self.labels_vocabulary = self.build_labels_vocabulary(labels)
+        labels_vocabulary = self.build_labels_vocabulary(labels)
 
-        self.labels_to_idx = self.labels_vocabulary["labels_to_idx"]
-        self.idx_to_labels = self.labels_vocabulary["idx_to_labels"]
+        self.labels_to_idx = labels_vocabulary["labels_to_idx"]
+        self.idx_to_labels = labels_vocabulary["idx_to_labels"]
 
 
 
 
 
     def build_tokens_vocabulary(self,sentences:List[List[str]]):  
-        """Create a vocabulary from tokens in sentences with padding having index -1
-
+        """Create two different vocabularies from sentence tokens for word to vocabulary index and viceversa
+        N.B. Padding will have index 0 while unknown words index 1.
         Args:
-            sentences (List[List[str]]): list of list of strings
+            sentences (List[List[str]]): List of list of sentence tokens
 
         Returns:
-            dictionary: Returns a dictionary with the structure {token:index} 
+            dict: {"word_to_idx": word_to_idx (dict), "idx_to_word": idx_to_word (dict)} 
         """
         word_to_idx = {}
         idx_to_word = {}
@@ -39,11 +46,10 @@ class Vocabulary():
         word_to_idx["<unk>"] = idx
         idx_to_word[idx] = "<unk>"
 
-        idx +=1
-        word_to_idx["<num>"]=idx
-        idx_to_word[idx] = "<num>"
+        
 
         idx+=1
+
         for sentences_list in sentences:
             for token in sentences_list:
                 if token.isnumeric():
@@ -62,14 +68,15 @@ class Vocabulary():
 
             
     def build_labels_vocabulary(self,sentences_labels: List[List[str]]):
-        """Converts labels in integral indexes with padding having the greater index
+
+        """Create two different vocabularies from sentence labels for label to vocabulary index and viceversa.
+        N.B.: padding will have the bigger index
 
         Args:
-            sentences_labels (List[List[str]]): List of list of strings (labels)
-            
+            sentences_labels (List[List[str]]): List of list of sentences token labels
 
         Returns:
-            dictionary: Returns a dictionary with the structure {label:index}
+            dict: {"labels_to_idx": labels_to_idx (dict), "idx_to_labels": idx_to_labels (dict)} 
         """
         labels_to_idx = {}
         idx_to_labels = {}

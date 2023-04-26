@@ -1,16 +1,14 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import utils
-from typing import List
+
 
 
 class BioClassifier(nn.Module):
     """BIO classifier class
     """
 
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, labelset_size: int, layers_num: int, device: str):
+    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, labelset_size: int, layers_num: int, dropout: float, device: str):
         """Init class for the BIO classifier
 
         Args:
@@ -19,6 +17,7 @@ class BioClassifier(nn.Module):
             vocab_size (int): Vocabulary size
             labelset_size (int): Number of classes
             layers_num (int): Number of layers of the LSTM
+            dropout (float): dropout value for the dropout layer
             device (str): Device for calculation
         """
         super(BioClassifier, self).__init__()
@@ -30,7 +29,7 @@ class BioClassifier(nn.Module):
 
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, layers_num,
                             bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0.8)
-        
+
         self.dropout = nn.Dropout(0.8)
 
         if(utils.BIDIRECTIONAL):
@@ -43,13 +42,12 @@ class BioClassifier(nn.Module):
         """Model forward pass
 
         Args:
-        sentence (tuple): A tuple containing in sentence[0] a tensor of padded sentences and in sentence[1] a list of original (non padded) lenghts for each sentence. The bird view is (tensor_padded_sentences, list_of_lenghts) 
+        sentence (tuple): (Tensor[padded_sentences], List[lenghts (int)]) N.B.: lenghts refers to the original non padded sentences
 
         Returns:
             Tensor: Model predictions
         """
-
-        embeds = self.embed(sentence[0])
+        embeds = self.word_embeddings(sentence[0])
         embeds = self.dropout(embeds)
 
         embeds = torch.nn.utils.rnn.pack_padded_sequence(
@@ -58,22 +56,9 @@ class BioClassifier(nn.Module):
 
         output_padded, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(
             lstm_out, batch_first=True)
-        
-        output_padded = self.dropout(output_padded)
 
+        output_padded = self.dropout(output_padded)
 
         labels_space = self.hidden2labels(output_padded)
 
         return labels_space
-
-    def embed(self, sentence:torch.Tensor):
-        """Aux function for embedding
-
-        Args:
-            sentence (torch.Tensor): padded Tensor of sentences
-
-        Returns:
-            Tensor: word embedding fot input tensor of sentences
-        """
-        
-        return self.word_embeddings(sentence)

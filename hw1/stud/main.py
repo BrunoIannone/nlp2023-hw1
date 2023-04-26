@@ -9,7 +9,6 @@ import biodataset
 import bioclassifier as bio
 import os
 import utils
-import torch
 import vocabulary
 
 
@@ -47,7 +46,7 @@ test_dataloader = DataLoader(
 
 
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
-                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)
+                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM,utils.DROPOUT, device)
 loss_function = nn.CrossEntropyLoss(ignore_index=len(vocab.labels_to_idx)-1)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
@@ -55,6 +54,5 @@ optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.idx_to_labels)
 logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
 utils.plot_logs(logs, 'Train vs Test loss')
-results = trainer.test(test_dataloader, utils.EPOCHS_NUM-1)
-#TODO: automatizzare il carico dei pesi
+results = trainer.test(test_dataloader)
 print(results)

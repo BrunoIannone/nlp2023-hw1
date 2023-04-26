@@ -1,13 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 from tqdm.auto import tqdm
 import os
 import utils
-import random
-import time
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.utils.data import Dataset
 from seqeval.metrics import f1_score
 
@@ -39,28 +34,25 @@ class Trainer():
 
         Args:
             loss_function: Chosen loss function
-            training_data (Dataset): Training data from Data Loader
-
-            valid_dataset (Dataset): BIO dataset class
+            training_data (Dataset): Training data
+            valid_dataset (Dataset): Validation data
             epochs (int): Number of epochs
 
 
         Returns:
-            dict: dictionary wit train/valid losses {"train_history" : train_loss_log, "valid_history": valid_loss_log}
+            dict: {"train_history" : train_loss_log, "valid_history": valid_loss_log}
         """
-
+        max_epoch = 0
         chance = utils.CHANCES
         last_loss = None
         train_log = []
         valid_log = []
         max_valid = 0
         for epoch in tqdm(range(epochs),desc="Epochs"):
-            # print(epoch)
             self.model.train()
 
             losses = []
-            # ,total = len(training_data), leave = True):
-            for _, (sentence, labels, sentence_len, labels_len) in enumerate(tqdm(training_data,desc="Train")):
+            for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(training_data),desc="Train"):
 
                 self.model.zero_grad()
 
@@ -85,8 +77,10 @@ class Trainer():
             valid_log.append(valid_loss.item())
             if(max_valid<f1):
                 max_valid = f1
+                max_epoch = epoch
                 torch.save(self.model.state_dict(), os.path.join(
                 utils.DIRECTORY_NAME, 'max.pt'))
+        print("Maximum F1 was: " + str(max_valid) + " at epoch: " + str(max_epoch))
 
         return {
             "train_history": train_log,
@@ -97,10 +91,10 @@ class Trainer():
         """Function for model evaluation
 
         Args:
-            valid_data (Dataset): BIO dataset class
+            valid_data (Dataset): validation data
 
         Returns:
-            float: average valid loss
+            tuple: (validation loss (average), F1 score )
         """
         self.model.eval()
 
@@ -109,21 +103,17 @@ class Trainer():
         losses = []
         with torch.no_grad():
 
-            # ,total = len(valid_data), leave = True, desc = "Validation"):
-            for _, (sentence, labels, sentence_len, labels_len) in enumerate(tqdm(valid_data,desc="Validation")):
+            for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(valid_data),desc="Validation"):
 
                 predictions = self.model((sentence, sentence_len))
                 transpose_pred = torch.transpose(predictions, 1, 2)
                 loss = self.loss_function(transpose_pred, labels)
                 losses.append(loss)
                 _, predicted_labels = transpose_pred.max(1)
-                #print(predictions)
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
                 total_pred.extend(predicted_labels)
                 labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
-               # print(labels)
-                #time.sleep(5)
                 total_labels.extend(labels)
         f1 = f1_score(total_labels, total_pred, mode='strict')
         print("F1: " + str(f1) +  "\n")
@@ -131,7 +121,7 @@ class Trainer():
 
         return sum(losses)/len(losses),f1
 
-    def test(self, test_data: Dataset, epoch: int):
+    def test(self, test_data: Dataset):
         """Function for model testing
 
         Args:
@@ -145,21 +135,20 @@ class Trainer():
         total_pred = []
         total_labels = []
 
-        right = 0
+        
         self.model.load_state_dict(torch.load(os.path.join(
             utils.DIRECTORY_NAME, 'max.pt')))
-        tot = 0
+        
         self.model.eval()
         with torch.no_grad():
 
             for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(test_data), desc="Testing"):
                 predictions = self.model((sentence, sentence_len))
-                _, predictions = torch.transpose(predictions, 1, 2).max(1)
-                predictions = utils.idx_to_label(
-                    self.idx_to_labels, predictions.tolist())
-                total_pred.extend(predictions)
-
-                # print(predictions)
+                transpose_pred = torch.transpose(predictions, 1, 2)
+                _, predicted_labels = transpose_pred.max(1)
+                predicted_labels = utils.idx_to_label(
+                    self.idx_to_labels, predicted_labels.tolist())
+                total_pred.extend(predicted_labels)
                 labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
                 total_labels.extend(labels)
 
