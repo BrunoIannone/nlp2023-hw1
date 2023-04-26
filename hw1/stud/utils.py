@@ -16,10 +16,11 @@ BIDIRECTIONAL =True
 DIRECTORY_NAME = os.path.dirname(__file__)
 LEARNING_RATE = 0.01
 CHANCES = 5
-DROPOUT = 0.8
-BATCH_SIZE = 1#4096 #2^12
+DROPOUT_LAYER = 0.8
+DROPOUT_LSTM = 0.2
+BATCH_SIZE = 2#4096 #2^12
 #####################
-
+EARLY_STOP = 0
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 

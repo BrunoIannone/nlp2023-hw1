@@ -52,10 +52,9 @@ class Vocabulary():
 
         for sentences_list in sentences:
             for token in sentences_list:
-                if token.isnumeric():
-                    continue
+                
 
-                elif token.lower() not in word_to_idx and not any(character in special_characters for character in token.lower()):
+                if token.lower() not in word_to_idx and not any(character in special_characters for character in token.lower()):
                     word_to_idx[token.lower()] = idx
                     idx_to_word[idx] = token.lower()
                     idx += 1

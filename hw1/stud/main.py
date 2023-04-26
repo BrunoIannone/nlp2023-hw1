@@ -38,21 +38,20 @@ test_dataset = biodataset.BioDataset(
 
 
 train_dataloader = DataLoader(
-    train_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=True)
+    train_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
 valid_dataloader = DataLoader(
-    valid_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=True)
+    valid_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
 test_dataloader = DataLoader(
-    test_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=True)
-
+    test_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
 
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
-                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM,utils.DROPOUT, device)
-loss_function = nn.CrossEntropyLoss(ignore_index=len(vocab.labels_to_idx)-1)
+                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)
+loss_function = nn.CrossEntropyLoss(ignore_index=vocab.labels_to_idx["<pad>"],reduction=None)
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
 
 trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.idx_to_labels)
-logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
+logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM,utils.EARLY_STOP)
 utils.plot_logs(logs, 'Train vs Test loss')
 results = trainer.test(test_dataloader)
 print(results)

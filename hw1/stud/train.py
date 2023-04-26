@@ -6,7 +6,7 @@ import utils
 from torch.utils.data import Dataset
 from seqeval.metrics import f1_score
 
-
+import time
 class Trainer():
     """Class for model training
     """
@@ -43,11 +43,12 @@ class Trainer():
             dict: {"train_history" : train_loss_log, "valid_history": valid_loss_log}
         """
         max_epoch = 0
-        chance = utils.CHANCES
-        last_loss = None
+        if(utils.EARLY_STOP):
+            chance = utils.CHANCES
+            last_f1 = None
         train_log = []
         valid_log = []
-        max_valid = 0
+        max_f1 = 0
         for epoch in tqdm(range(epochs),desc="Epochs"):
             self.model.train()
 
@@ -58,7 +59,13 @@ class Trainer():
 
                 predictions = self.model((sentence, sentence_len))
                 
-                loss = self.loss_function(torch.transpose(predictions, 1, 2), labels)
+                predictions = predictions.view(-1, predictions.shape[-1])
+
+                labels = labels.view(-1)
+
+                loss = self.loss_function(predictions, labels)
+
+
                 losses.append(loss)
 
                 loss.backward()
@@ -68,19 +75,23 @@ class Trainer():
             print(" Train Loss: " + str(float(sum(losses)/len(losses))) + "\n")
             valid_loss,f1 = self.validation(valid_dataset)
             print(" Valid loss: " + str(float(valid_loss)) + "\n")
-            #if last_loss != None and valid_loss > last_loss:
-            #    chance -= 1
-            #    print(" LOSS NOT LOWERING => chance = " + str(chance))
-            #    if chance <= 0:
-            #        break
-            #last_loss = valid_loss
+            if utils.EARLY_STOP and last_f1 != None and f1 > last_f1:
+                chance -= 1
+                print(" F1 LOWERING => chance = " + str(chance))
+                if chance <= 0:
+                    break
+            if utils.EARLY_STOP:
+                last_f1 = f1
             valid_log.append(valid_loss.item())
-            if(max_valid<f1):
-                max_valid = f1
+            if(max_f1<f1):
+                max_f1 = f1
                 max_epoch = epoch
                 torch.save(self.model.state_dict(), os.path.join(
                 utils.DIRECTORY_NAME, 'max.pt'))
-        print("Maximum F1 was: " + str(max_valid) + " at epoch: " + str(max_epoch))
+                if utils.EARLY_STOP:
+                    print("New max F1 reached, restoring chances")
+                    chance = utils.CHANCES
+        print("Maximum F1 was: " + str(max_f1) + " at epoch: " + str(max_epoch))
 
         return {
             "train_history": train_log,
@@ -106,10 +117,14 @@ class Trainer():
             for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(valid_data),desc="Validation"):
 
                 predictions = self.model((sentence, sentence_len))
-                transpose_pred = torch.transpose(predictions, 1, 2)
-                loss = self.loss_function(transpose_pred, labels)
+                
+                predictions = predictions.view(-1, predictions.shape[-1])
+
+                labels = labels.view(-1)
+
+                loss = self.loss_function(predictions, labels)
                 losses.append(loss)
-                _, predicted_labels = transpose_pred.max(1)
+                _, predicted_labels = predictions.max(1)
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
                 total_pred.extend(predicted_labels)
@@ -144,8 +159,13 @@ class Trainer():
 
             for _, (sentence, labels, sentence_len, labels_len) in tqdm(enumerate(test_data), desc="Testing"):
                 predictions = self.model((sentence, sentence_len))
-                transpose_pred = torch.transpose(predictions, 1, 2)
-                _, predicted_labels = transpose_pred.max(1)
+                
+                predictions = predictions.view(-1, predictions.shape[-1])
+
+                labels = labels.view(-1)
+
+                _, predicted_labels = predictions.max(1)
+
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
                 total_pred.extend(predicted_labels)

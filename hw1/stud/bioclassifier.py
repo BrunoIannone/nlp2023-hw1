@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
 import utils
-
+import time
 
 
 class BioClassifier(nn.Module):
     """BIO classifier class
     """
 
-    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, labelset_size: int, layers_num: int, dropout: float, device: str):
+    def __init__(self, embedding_dim: int, hidden_dim: int, vocab_size: int, labelset_size: int, layers_num: int, device: str):
         """Init class for the BIO classifier
 
         Args:
@@ -26,11 +26,12 @@ class BioClassifier(nn.Module):
         self.device = device
         self.word_embeddings = nn.Embedding(
             vocab_size, embedding_dim, padding_idx=0)
+        
 
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, layers_num,
-                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=0.8)
+                            bidirectional=utils.BIDIRECTIONAL, batch_first=True, dropout=utils.DROPOUT_LSTM)
 
-        self.dropout = nn.Dropout(0.8)
+        self.dropout_layer = nn.Dropout(utils.DROPOUT_LAYER)
 
         if(utils.BIDIRECTIONAL):
 
@@ -52,13 +53,14 @@ class BioClassifier(nn.Module):
 
         embeds = torch.nn.utils.rnn.pack_padded_sequence(
             embeds, sentence[1], batch_first=True, enforce_sorted=False)
+        
         lstm_out, _ = self.lstm(embeds)
-
+        
         output_padded, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(
             lstm_out, batch_first=True)
-
-        output_padded = self.dropout(output_padded)
-
+        
+        output_padded = self.dropout_layer(output_padded)
+        
         labels_space = self.hidden2labels(output_padded)
-
+        
         return labels_space

@@ -19,8 +19,6 @@ class BioDataset(Dataset):
         """
         self.sentences = sentences
         self.labels = labels
-        self.transform = transform
-        self.target_transform = target_transform
         self.samples = self._preprocess_samples(sentences, labels)
         self.word_to_idx = word_to_idx
         self.labels_to_idx = labels_to_idx
