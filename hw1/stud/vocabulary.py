@@ -3,14 +3,17 @@ import json
 class Vocabulary():
     """Vocabulary class
     """
-    def __init__(self,sentences: List[List[str]], labels: List[List[str]],new_vocab: bool):
+    def __init__(self,sentences: List[List[str]], labels: List[List[str]],save_vocab: bool = False):
         """Init function for the vocabulary class
 
         Args:
             sentences (List[List[str]]): List of list of sentence tokens
             labels (List[List[str]]): List of list of sentences token labels
-        """
+            save_vocab (bool, optional): True if the vocabulary needs to be saved (as .txt). Defaults to False.
+            
 
+            
+        """
         token_vocabulary = self.build_tokens_vocabulary(sentences)
         
         self.word_to_idx = token_vocabulary["word_to_idx"]
@@ -21,7 +24,7 @@ class Vocabulary():
         self.labels_to_idx = labels_vocabulary["labels_to_idx"]
         self.idx_to_labels = labels_vocabulary["idx_to_labels"]
 
-        if new_vocab:
+        if save_vocab:
             with open("word_to_idx.txt","a") as fp:
                 json.dump(self.word_to_idx,fp)
                 fp.close()

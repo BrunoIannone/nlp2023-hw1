@@ -137,8 +137,7 @@ class Trainer():
                 losses.append(loss)
 
                 predicted_labels = torch.argmax(predictions, -1)
-                print(predicted_labels.tolist())
-                time.sleep(5)
+                
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
 

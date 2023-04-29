@@ -79,14 +79,12 @@ class StudentModel(Model):
        self.model.eval()
        with torch.no_grad():
         res = []
-        #print(len(tokens))
         for sentence in tokens:
             
             sentence_len = len(sentence)
             sentence = utils.word_to_idx(self.vocab["word_to_idx"],sentence)
             predictions = self.model((torch.tensor(sentence).view((1,sentence_len)),[sentence_len]))
             predicted_labels = torch.argmax(predictions,-1)
-            print("PREDICTED: " + str(predicted_labels))
             predicted_labels = utils.idx_to_label(
                    self.vocab["idx_to_labels"], predicted_labels.tolist())
             
