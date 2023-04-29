@@ -1,0 +1,1 @@
+{"0": "O", "1": "B-SCENARIO", "2": "B-CHANGE", "3": "B-ACTION", "4": "B-SENTIMENT", "5": "I-CHANGE", "6": "B-POSSESSION", "7": "I-ACTION", "8": "I-SENTIMENT", "9": "I-SCENARIO", "10": "I-POSSESSION", "11": "<pad>"}

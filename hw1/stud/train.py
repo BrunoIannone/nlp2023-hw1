@@ -5,6 +5,8 @@ import os
 import utils
 from torch.utils.data import Dataset
 from seqeval.metrics import f1_score
+import sklearn
+
 
 import time
 class Trainer():
@@ -18,6 +20,7 @@ class Trainer():
             model (nn.Module): Chosen model to train
             optimizer: Chosen optimizer to use for optimization
             device (str): Chosen device for training
+            loss_function: Chosen loss function
             idx_to_labels (dict): dictionary with structure {index:label}
 
         """
@@ -33,7 +36,6 @@ class Trainer():
         """Training function
 
         Args:
-            loss_function: Chosen loss function
             training_data (Dataset): Training data
             valid_dataset (Dataset): Validation data
             epochs (int): Number of epochs
@@ -42,10 +44,12 @@ class Trainer():
         Returns:
             dict: {"train_history" : train_loss_log, "valid_history": valid_loss_log}
         """
+        
         max_epoch = 0
         if(utils.EARLY_STOP):
             chance = utils.CHANCES
             last_f1 = None
+
         train_log = []
         valid_log = []
         f1_log= []
@@ -72,13 +76,14 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
 
-            train_log.append((sum(losses)/len(losses)).item())
-            print(" Train Loss: " + str(float(sum(losses)/len(losses))) + "\n")
+            train_epoch_loss = sum(losses)/len(losses)
+            train_log.append(train_epoch_loss.item())
+            print("Train Loss: " + str(float(train_epoch_loss)))
             valid_loss,f1 = self.validation(valid_dataset)
-            print(" Valid loss: " + str(float(valid_loss)) + "\n")
-            if utils.EARLY_STOP and last_f1 != None and f1 > last_f1:
+            print("Valid loss: " + str(float(valid_loss)))
+            if utils.EARLY_STOP and last_f1 != None and f1 < last_f1:
                 chance -= 1
-                print(" F1 LOWERING => chance = " + str(chance))
+                print("F1 LOWERING => chance = " + str(chance))
                 if chance <= 0:
                     break
             if utils.EARLY_STOP:
@@ -93,6 +98,7 @@ class Trainer():
                 if utils.EARLY_STOP:
                     print("New max F1 reached, restoring chances")
                     chance = utils.CHANCES
+            print()
         print("Maximum F1 was: " + str(max_f1) + " at epoch: " + str(max_epoch))
 
         return {
@@ -131,13 +137,16 @@ class Trainer():
                 predicted_labels = torch.argmax(predictions,-1)
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
+                print(predicted_labels)
+                time.sleep(5)
+
                 total_pred.extend(predicted_labels)
                 labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
                 total_labels.extend(labels)
 
         f1 = f1_score(total_labels, total_pred, mode='strict')
-        print("F1: " + str(f1) +  "\n")
-        print("\n")
+        print("F1: " + str(f1))
+        
 
         return sum(losses)/len(losses),f1
 
@@ -158,7 +167,8 @@ class Trainer():
         
         self.model.load_state_dict(torch.load(os.path.join(
             utils.DIRECTORY_NAME, 'max.pt')))
-        
+        f = open("./res.txt","a")
+
         self.model.eval()
         with torch.no_grad():
 
@@ -169,8 +179,17 @@ class Trainer():
 
                predicted_labels = utils.idx_to_label(
                    self.idx_to_labels, predicted_labels.tolist())
+                
                total_pred.extend(predicted_labels)
                labels = utils.idx_to_label(self.idx_to_labels, labels.tolist())
+               
                total_labels.extend(labels)
+               f.write(str(predicted_labels))
+               f.write("\n")
+               f.write(str(labels))
+               f.write("\n")
 
+               f.write("-----\n")
+        f.close()
+        
         return f1_score(total_labels, total_pred, mode='strict')

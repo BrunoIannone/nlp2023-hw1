@@ -6,8 +6,6 @@ from typing import List
 class BioDataset(Dataset):
     """BIO dataset class
     """
-    # TODO: vedere se transform e target_transform sono utili
-
     def __init__(self, sentences: List[List[str]], labels: List[List[str]], word_to_idx: dict, labels_to_idx: dict):
         """Constructor for the BIO dataset
 
@@ -53,6 +51,6 @@ class BioDataset(Dataset):
         """
         sentence = self.samples[index][0]
         labels = self.samples[index][1]
-        res = utils.sentence_to_idx(self.word_to_idx, sentence), utils.label_to_idx(
+        res = utils.word_to_idx(self.word_to_idx, sentence), utils.label_to_idx(
             self.labels_to_idx, labels)
         return res

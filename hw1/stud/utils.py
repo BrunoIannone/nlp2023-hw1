@@ -5,23 +5,26 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from typing import List
 from collections import Counter
-import time
-
+"""
+utils module
+"""
 ###HYPERPARAMETERS###
 EMBEDDING_DIM = 32
 LAYERS_NUM = 2
-HIDDEN_DIM = 128 
-EPOCHS_NUM = 10
-BIDIRECTIONAL =True
-DIRECTORY_NAME = os.path.dirname(__file__)
-LEARNING_RATE = 0.001
+HIDDEN_DIM = 64 
+EPOCHS_NUM = 150
+LEARNING_RATE = 0.01
 CHANCES = 5
-DROPOUT_LAYER = 0
-DROPOUT_LSTM = 0
+DROPOUT_LAYER = 0.2
+DROPOUT_EMBED = 0.5
+DROPOUT_LSTM = 0.8
 BATCH_SIZE = 4096 #2^12
 #####################
-EARLY_STOP = 0
+EARLY_STOP = True
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+BIDIRECTIONAL =True
+DIRECTORY_NAME = os.path.dirname(__file__)
+
 
 
 
@@ -74,7 +77,7 @@ def label_to_idx(labels_to_idx:dict, labels: List[str]):
         res.append(labels_to_idx[label])
     return res
 
-def sentence_to_idx(word_to_idx:dict,sentence:List[str]):
+def word_to_idx(word_to_idx:dict,sentence:List[str]):
     """Converts tokens of strings in their indexes. If a token is unknown, it's index is the <unk> key value
 
     Args:
@@ -84,10 +87,10 @@ def sentence_to_idx(word_to_idx:dict,sentence:List[str]):
     Returns:
         list: list of integers that represent tokens indexes
     """
+    #print(sentence)
     res = []
     for word in sentence:
         
-
         if word.lower() not in word_to_idx:
             res.append(word_to_idx["<unk>"])
         else:
@@ -111,7 +114,7 @@ def idx_to_label(idx_to_labels:dict, src_label:List[int]):
         for label in label_list:
             
             #print(label)
-            if '<pad>' == idx_to_labels[label]:
+            if '<pad>' == idx_to_labels[int(label)]:
                 temp.append("O") 
             else:
                 temp.append(idx_to_labels[label])
@@ -167,6 +170,11 @@ def collate_fn(sentence):
     return tensor_sentences_padded.to(DEVICE), tensor_labels_padded.to(DEVICE), sentences_lens, labels_lens
     
 
-    
+def str_to_int(str_dict_key):
+    dict = {}
+    for key in str_dict_key:
+        dict[int(key)] = str_dict_key[key]
+    return dict
+
 
    

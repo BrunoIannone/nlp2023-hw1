@@ -42,7 +42,7 @@ train_dataloader = DataLoader(
 valid_dataloader = DataLoader(
     valid_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
 test_dataloader = DataLoader(
-    test_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
+    test_dataset, batch_size=1, collate_fn=utils.collate_fn, shuffle=False)
 
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
                           len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)

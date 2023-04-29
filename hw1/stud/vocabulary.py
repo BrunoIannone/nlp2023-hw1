@@ -1,4 +1,5 @@
 from typing import List
+import json
 class Vocabulary():
     """Vocabulary class
     """
@@ -20,6 +21,20 @@ class Vocabulary():
         self.labels_to_idx = labels_vocabulary["labels_to_idx"]
         self.idx_to_labels = labels_vocabulary["idx_to_labels"]
 
+        with open("word_to_idx.txt","a") as fp:
+            json.dump(self.word_to_idx,fp)
+            fp.close()
+        with open("idx_to_word.txt","a") as fp:    
+            json.dump(self.idx_to_word,fp)
+            fp.close()
+        with open("labels_to_idx.txt","a") as fp:    
+            json.dump(self.labels_to_idx,fp)
+            fp.close()
+
+        with open("idx_to_labels.txt","a") as fp:    
+            json.dump(self.idx_to_labels,fp)
+            fp.close()
+
 
 
 
@@ -36,24 +51,19 @@ class Vocabulary():
         word_to_idx = {}
         idx_to_word = {}
         special_characters = "!@#$%^&*()-+?_=,<>/"
-
         idx = 0
 
         word_to_idx["<pad>"] = idx
         idx_to_word[idx] = "<pad>"
-
         idx+=1
+        
         word_to_idx["<unk>"] = idx
         idx_to_word[idx] = "<unk>"
-
-        
-
         idx+=1
 
-        for sentences_list in sentences:
-            for token in sentences_list:
+        for sentence_list in sentences:
+            for token in sentence_list:
                 
-
                 if token.lower() not in word_to_idx and not any(character in special_characters for character in token.lower()):
                     word_to_idx[token.lower()] = idx
                     idx_to_word[idx] = token.lower()
@@ -80,8 +90,8 @@ class Vocabulary():
         labels_to_idx = {}
         idx_to_labels = {}
         idx = 0
-        for labels_list in sentences_labels:
-            for label in labels_list:
+        for label_list in sentences_labels:
+            for label in label_list:
                 if label not in labels_to_idx:
                     labels_to_idx[label] = idx
                     idx_to_labels[idx] = label
