@@ -87,7 +87,7 @@ def word_to_idx(word_to_idx:dict,sentence:List[str]):
     Returns:
         list: list of integers that represent tokens indexes
     """
-    #print(sentence)
+    
     res = []
     for word in sentence:
         
@@ -96,15 +96,16 @@ def word_to_idx(word_to_idx:dict,sentence:List[str]):
         else:
             res.append(word_to_idx[word.lower()])
     return res
-def idx_to_label(idx_to_labels:dict, src_label:List[int]):
+
+def idx_to_label(idx_to_labels:dict, src_label:List[List[int]]):
     """Converts list of labels indexes to their string value. It's the inverse operation of label_to_idx function
 
     Args:
         labels_to_idx (dict): dictionary with structure {label:index}
-        src_label (list): list of label indexes
+        src_label (List[List[int]]): list of label indexes
 
     Returns:
-        list(str): List of labels (strings)
+        List[List[str]]: List of list of labels (strings)
     """
     out_label = []
     temp = []
@@ -113,7 +114,6 @@ def idx_to_label(idx_to_labels:dict, src_label:List[int]):
         temp = []
         for label in label_list:
             
-            #print(label)
             if '<pad>' == idx_to_labels[int(label)]:
                 temp.append("O") 
             else:

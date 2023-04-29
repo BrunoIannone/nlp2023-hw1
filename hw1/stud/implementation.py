@@ -91,9 +91,10 @@ class StudentModel(Model):
                    self.vocab["idx_to_labels"], predicted_labels.tolist())
             
                 
-            res.extend(predicted_labels)
+            res.extend(predicted_labels) #appending would violate the signature
+                                         #as idx_to_label returns List[List[str]] 
         
-        print(res)
+        
         return res
     
     def load_vocabularies(self, path):

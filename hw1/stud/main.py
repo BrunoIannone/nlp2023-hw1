@@ -11,6 +11,9 @@ import os
 import utils
 import vocabulary
 
+### N.B. In order to start the training is necessary to cancel "stud." from utils import
+#  in bioclassifier.py  because of personally unknwown python file managing. 
+# Viceversa, to launch from test.sh, add again "stud." to the import
 
 device = utils.DEVICE
 
@@ -23,7 +26,7 @@ test_data = utils.build_data_from_jsonl(
 
 
 
-vocab = vocabulary.Vocabulary(training_data["sentences"], training_data["labels"])
+vocab = vocabulary.Vocabulary(training_data["sentences"], training_data["labels"],False)
 
 
 

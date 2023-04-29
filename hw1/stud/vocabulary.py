@@ -3,7 +3,7 @@ import json
 class Vocabulary():
     """Vocabulary class
     """
-    def __init__(self,sentences: List[List[str]], labels: List[List[str]]):
+    def __init__(self,sentences: List[List[str]], labels: List[List[str]],new_vocab: bool):
         """Init function for the vocabulary class
 
         Args:
@@ -21,19 +21,20 @@ class Vocabulary():
         self.labels_to_idx = labels_vocabulary["labels_to_idx"]
         self.idx_to_labels = labels_vocabulary["idx_to_labels"]
 
-        with open("word_to_idx.txt","a") as fp:
-            json.dump(self.word_to_idx,fp)
-            fp.close()
-        with open("idx_to_word.txt","a") as fp:    
-            json.dump(self.idx_to_word,fp)
-            fp.close()
-        with open("labels_to_idx.txt","a") as fp:    
-            json.dump(self.labels_to_idx,fp)
-            fp.close()
+        if new_vocab:
+            with open("word_to_idx.txt","a") as fp:
+                json.dump(self.word_to_idx,fp)
+                fp.close()
+            with open("idx_to_word.txt","a") as fp:    
+                json.dump(self.idx_to_word,fp)
+                fp.close()
+            with open("labels_to_idx.txt","a") as fp:    
+                json.dump(self.labels_to_idx,fp)
+                fp.close()
 
-        with open("idx_to_labels.txt","a") as fp:    
-            json.dump(self.idx_to_labels,fp)
-            fp.close()
+            with open("idx_to_labels.txt","a") as fp:    
+                json.dump(self.idx_to_labels,fp)
+                fp.close()
 
 
 
