@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import stud.utils as utils 
+import utils as utils 
 
 
 class BioClassifier(nn.Module):

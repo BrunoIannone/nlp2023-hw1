@@ -167,7 +167,6 @@ class Trainer():
 
         self.model.load_state_dict(torch.load(os.path.join(
             utils.DIRECTORY_NAME, 'max.pt')))
-        f = open("./res.txt", "a")
 
         self.model.eval()
         with torch.no_grad():
@@ -186,6 +185,6 @@ class Trainer():
 
                 total_labels.extend(labels)
 
-        f.close()
+        
 
         return f1_score(total_labels, total_pred, mode='strict')

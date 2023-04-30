@@ -23,7 +23,6 @@ class Vocabulary():
 
         self.labels_to_idx = labels_vocabulary["labels_to_idx"]
         self.idx_to_labels = labels_vocabulary["idx_to_labels"]
-
         if save_vocab:
             with open("word_to_idx.txt","a") as fp:
                 json.dump(self.word_to_idx,fp)

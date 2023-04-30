@@ -9,9 +9,9 @@ from collections import Counter
 utils module
 """
 ###HYPERPARAMETERS###
-EMBEDDING_DIM = 32
+EMBEDDING_DIM = 25
 LAYERS_NUM = 2
-HIDDEN_DIM = 64 
+HIDDEN_DIM = 50 
 EPOCHS_NUM = 150
 LEARNING_RATE = 0.01
 CHANCES = 5
