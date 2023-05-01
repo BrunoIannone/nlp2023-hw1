@@ -5,10 +5,8 @@ import os
 import utils
 from torch.utils.data import Dataset
 from seqeval.metrics import f1_score
-import sklearn
-
-
-import time
+from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 
 class Trainer():
@@ -82,7 +80,7 @@ class Trainer():
             print("Train Loss: " + str(float(train_epoch_loss)))
             valid_loss, f1 = self.validation(valid_dataset)
             print("Valid loss: " + str(float(valid_loss)))
-            if utils.EARLY_STOP and last_f1 != None and f1 < last_f1:
+            if utils.EARLY_STOP and last_f1 != None and f1 < last_f1: #the model loose a chance if the epoch F1 is lower than than the previous one
                 chance -= 1
                 print("F1 LOWERING => chance = " + str(chance))
                 if chance <= 0:
@@ -91,7 +89,7 @@ class Trainer():
                 last_f1 = f1
             valid_log.append(valid_loss.item())
             f1_log.append(f1.item())
-            if(max_f1 < f1):
+            if(max_f1 < f1):# If a new maximum F1 is reached, the model is "forgiven" and saved
                 max_f1 = f1
                 max_epoch = epoch
                 torch.save(self.model.state_dict(), os.path.join(
@@ -151,22 +149,22 @@ class Trainer():
 
         return sum(losses)/len(losses), f1
 
-    def test(self, test_data: Dataset):
+    def test(self, test_data: Dataset,path):
         """Function for model testing
 
         Args:
             test_data (Dataset): Test data
-            epoch (int): epoch number
-
+            path (str): path to weights to load
 
         Returns:
             float: F1 score
         """
         total_pred = []
         total_labels = []
+        total_pred_int = []
+        total_labels_int = []
 
-        self.model.load_state_dict(torch.load(os.path.join(
-            utils.DIRECTORY_NAME, 'max.pt')))
+        self.model.load_state_dict(path)
 
         self.model.eval()
         with torch.no_grad():
@@ -175,16 +173,33 @@ class Trainer():
                 predictions = self.model((sentence, sentence_len))
 
                 predicted_labels = torch.argmax(predictions, -1)
-                
+
                 predicted_labels = utils.idx_to_label(
                     self.idx_to_labels, predicted_labels.tolist())
+                total_pred_int += predicted_labels[0]
+
 
                 total_pred.extend(predicted_labels)
                 labels = utils.idx_to_label(
                     self.idx_to_labels, labels.tolist())
+                total_labels_int += labels[0]
 
                 total_labels.extend(labels)
-
         
+        #plot confusion matrix
+
+        idx_to_label_values = list(self.idx_to_labels.values())
+        idx_to_label_values.remove('<pad>')
+        idx_to_label_values.sort()
+        
+        cm = confusion_matrix(total_labels_int,total_pred_int,normalize='true')
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=idx_to_label_values)
+        disp.plot(cmap=plt.cm.Blues)
+        disp.ax_.set(
+                title='Confusion Matrix', 
+                xlabel='Predicted', 
+                ylabel='Actual ')
+        plt.xticks(rotation = 45)
+        plt.show()
 
         return f1_score(total_labels, total_pred, mode='strict')

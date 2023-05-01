@@ -1,7 +1,5 @@
 import train as tr
-#import implementation
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import utils
 from torch.utils.data import DataLoader
@@ -10,10 +8,7 @@ import bioclassifier as bio
 import os
 import utils
 import vocabulary
-
-### N.B. In order to start the training is necessary to cancel "stud." from utils import
-#  in bioclassifier.py  because of personally unknwown python file managing. 
-# Viceversa, to launch from test.sh, add again "stud." to the import
+import torch
 
 device = utils.DEVICE
 
@@ -25,9 +20,8 @@ test_data = utils.build_data_from_jsonl(
     os.path.join(utils.DIRECTORY_NAME, '../../data/test.jsonl'))
 
 
-
-vocab = vocabulary.Vocabulary(training_data["sentences"], training_data["labels"],False)
-
+vocab = vocabulary.Vocabulary(
+    training_data["sentences"], training_data["labels"], False)
 
 
 train_dataset = biodataset.BioDataset(
@@ -47,14 +41,22 @@ valid_dataloader = DataLoader(
 test_dataloader = DataLoader(
     test_dataset, batch_size=1, collate_fn=utils.collate_fn, shuffle=False)
 
+#Uncomment the following lines and comment "embedding = None" to load a pretrained embedding
+
+# model = torch.load((os.path.join(
+#            utils.DIRECTORY_NAME, '0.702--0.721.pt')))
+#embedding = model['word_embeddings.weight']
+embedding = None
+
 model = bio.BioClassifier(utils.EMBEDDING_DIM, utils.HIDDEN_DIM,
-                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device)
+                          len(vocab.word_to_idx), len(vocab.labels_to_idx), utils.LAYERS_NUM, device, embedding)
 loss_function = nn.CrossEntropyLoss(ignore_index=vocab.labels_to_idx["<pad>"])
 optimizer = optim.Adam(model.parameters(), lr=utils.LEARNING_RATE)
 
-
-trainer = tr.Trainer(model, optimizer, device, loss_function,vocab.idx_to_labels)
+trainer = tr.Trainer(model, optimizer, device,
+                     loss_function, vocab.idx_to_labels)
 logs = trainer.train(train_dataloader, valid_dataloader, utils.EPOCHS_NUM)
-utils.plot_logs(logs, 'Train vs Test loss')
-results = trainer.test(test_dataloader)
+utils.plot_logs(logs, 'Train vs Valid loss plus F1')
+results = trainer.test(test_dataloader, torch.load(os.path.join(
+    utils.DIRECTORY_NAME, '0.702--0.721.pt')))
 print(results)

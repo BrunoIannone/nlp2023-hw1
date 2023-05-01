@@ -4,15 +4,12 @@ import matplotlib.pyplot as plt
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from typing import List
-from collections import Counter
-"""
-utils module
-"""
+
 ###HYPERPARAMETERS###
 EMBEDDING_DIM = 25
 LAYERS_NUM = 2
-HIDDEN_DIM = 50 
-EPOCHS_NUM = 150
+HIDDEN_DIM = 150
+EPOCHS_NUM = 500
 LEARNING_RATE = 0.01
 CHANCES = 5
 DROPOUT_LAYER = 0.2
@@ -22,7 +19,7 @@ BATCH_SIZE = 4096 #2^12
 #####################
 EARLY_STOP = True
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-BIDIRECTIONAL =True
+BIDIRECTIONAL = True
 DIRECTORY_NAME = os.path.dirname(__file__)
 
 
@@ -78,7 +75,7 @@ def label_to_idx(labels_to_idx:dict, labels: List[str]):
     return res
 
 def word_to_idx(word_to_idx:dict,sentence:List[str]):
-    """Converts tokens of strings in their indexes. If a token is unknown, it's index is the <unk> key value
+    """Converts tokens of strings in their indexes. If a token is unknown, its index is the <unk> key value
 
     Args:
         word_to_idx (dict): dictionary with structure {word:index}
@@ -170,7 +167,15 @@ def collate_fn(sentence):
     return tensor_sentences_padded.to(DEVICE), tensor_labels_padded.to(DEVICE), sentences_lens, labels_lens
     
 
-def str_to_int(str_dict_key):
+def str_to_int(str_dict_key:dict):
+    """Function for dict keys conversion from str to int
+
+    Args:
+        str_dict_key (dict): dictionary with keys having str type
+
+    Returns:
+        dict: input dict with the same keys converted in integers
+    """
     dict = {}
     for key in str_dict_key:
         dict[int(key)] = str_dict_key[key]
