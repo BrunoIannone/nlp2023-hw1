@@ -1,9 +1,0 @@
-data/
-logs/
-model/
-*.pdf
-*.md
-*.txt
-*.sh
-*.pyc
-*.pt

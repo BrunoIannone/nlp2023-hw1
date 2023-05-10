@@ -40,7 +40,7 @@ valid_dataloader = DataLoader(
     valid_dataset, batch_size=utils.BATCH_SIZE, collate_fn=utils.collate_fn, shuffle=False)
 test_dataloader = DataLoader(
     test_dataset, batch_size=1, collate_fn=utils.collate_fn, shuffle=False)
-
+print(len(vocab.word_to_idx))
 #Uncomment the following lines and comment "embedding = None" to load a pretrained embedding
 
 # model = torch.load((os.path.join(
